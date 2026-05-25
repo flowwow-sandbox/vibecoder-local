@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    # Один сводный PR в неделю вместо отдельного на каждый action — меньше шума для пилотника.
+    groups:
+      actions:
+        patterns: ["*"]
+    # Major-обновления (v4 → v5) могут сломать совместимость — делаем их руками.
+    # Patch/minor — автоматически.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

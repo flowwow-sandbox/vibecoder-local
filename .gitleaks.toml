@@ -1,0 +1,11 @@
+# gitleaks config для шаблона vibecoder
+# extends community ruleset, allowlist для .env.example
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allow placeholders in .env.example"
+paths = [
+    '''\.env\.example''',
+]

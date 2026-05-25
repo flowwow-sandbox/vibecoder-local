@@ -1,0 +1,86 @@
+{
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "python3 .claude/hooks/destructive-command-guard.py"}
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "python3 .claude/hooks/git-destructive-guard.py"}
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "python3 .claude/hooks/command-injection-guard.py"}
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "python3 .claude/hooks/git-no-verify-guard.py"}
+        ]
+      },
+      {
+        "hooks": [
+          {"type": "command", "command": "python3 .claude/hooks/secret-leak-guard.py"}
+        ]
+      },
+      {
+        "matcher": "Bash|Edit|Write|NotebookEdit",
+        "hooks": [
+          {"type": "command", "command": "python3 .claude/hooks/working-directory-guard.py"}
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {"type": "command", "command": "python3 .claude/hooks/api-key-leak-detector.py"}
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(make wt-new:*)",
+      "Bash(make setup:*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run watch:*)",
+      "Bash(gh workflow run:*)",
+      "Bash(gh secret set:*)",
+      "Bash(gh secret list:*)",
+      "Bash(gh auth status:*)",
+      "Bash(gh repo view:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git reflog:*)",
+      "Bash(git worktree list:*)",
+      "Bash(git worktree add:*)",
+      "Bash(git worktree remove:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(git revert:*)",
+      "Bash(git pull --ff-only:*)",
+      "Bash(./infra/start.sh:*)"
+    ]
+  }
+}

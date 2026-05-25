@@ -1,0 +1,4 @@
+# Supply chain protection для Python (см. AGENTS.md)
+# Симметрично .npmrc min-release-age=7
+[pip]
+exclude-newer = "7 days"

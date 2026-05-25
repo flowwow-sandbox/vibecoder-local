@@ -1,0 +1,48 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "sh -c 'cd \"$(git rev-parse --show-toplevel)\" && exec python3 .claude/hooks/destructive-command-guard.py'"}
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "sh -c 'cd \"$(git rev-parse --show-toplevel)\" && exec python3 .claude/hooks/git-destructive-guard.py'"}
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "sh -c 'cd \"$(git rev-parse --show-toplevel)\" && exec python3 .claude/hooks/command-injection-guard.py'"}
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {"type": "command", "command": "sh -c 'cd \"$(git rev-parse --show-toplevel)\" && exec python3 .claude/hooks/git-no-verify-guard.py'"}
+        ]
+      },
+      {
+        "hooks": [
+          {"type": "command", "command": "sh -c 'cd \"$(git rev-parse --show-toplevel)\" && exec python3 .claude/hooks/secret-leak-guard.py'"}
+        ]
+      },
+      {
+        "matcher": "Bash|apply_patch",
+        "hooks": [
+          {"type": "command", "command": "sh -c 'cd \"$(git rev-parse --show-toplevel)\" && exec python3 .claude/hooks/working-directory-guard.py'"}
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {"type": "command", "command": "sh -c 'cd \"$(git rev-parse --show-toplevel)\" && exec python3 .claude/hooks/api-key-leak-detector.py'"}
+        ]
+      }
+    ]
+  }
+}
