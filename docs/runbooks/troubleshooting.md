@@ -36,6 +36,12 @@ gh auth login
 
 ---
 
+### Симптом: `start.sh` пишет «gh CLI не авторизован», хотя ты авторизован
+
+Скорее всего агент (Codex) запущен в песочнице без доступа к сети (`workspace-write`, по умолчанию сеть выключена). Сетевые операции (проверка GitHub, `git push`, `gh pr`) при этом падают. Включи в Codex режим **Full Access** (команда `/approvals` → Full Access, либо селектор режима рядом с полем ввода) и повтори. На Claude Code сеть в Bash доступна по умолчанию — симптом специфичен для Codex.
+
+---
+
 ### Симптом: `gitleaks: command not found` / `precommit-not-installed`
 
 Не установлен `gitleaks` — инструмент проверки секретов, необходимый для pre-commit hook.

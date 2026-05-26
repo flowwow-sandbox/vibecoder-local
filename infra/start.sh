@@ -237,8 +237,16 @@ if [[ "${1:-}" == "--check-auth-only" ]]; then
   CHECK_AUTH_ONLY=true
 fi
 
-if ! gh auth status >/dev/null 2>&1; then
+if ! gh auth token >/dev/null 2>&1; then
   human_err "gh CLI не авторизован." "   Запусти: gh auth login"
+fi
+# Наличие токена ≠ его валидность. Провалидируем (истёк / отозван / не те
+# scopes) через gh auth status, но ТОЛЬКО когда сеть доступна: gh auth status
+# ходит в API и оффлайн ложно падает. При CODEX_SANDBOX_NETWORK_DISABLED=1
+# (агент-песочница без сети) пропускаем, чтобы не путать «нет сети» с «токен плохой».
+if [[ "${CODEX_SANDBOX_NETWORK_DISABLED:-}" != "1" ]] && ! gh auth status >/dev/null 2>&1; then
+  human_err "Токен GitHub есть, но не прошёл проверку — возможно истёк/отозван или нет связи с GitHub." \
+    "   Переавторизуйся: gh auth login   (если дело в сети — проверь подключение / включи Full Access в Codex)"
 fi
 
 if [[ "$CHECK_AUTH_ONLY" == true ]]; then
