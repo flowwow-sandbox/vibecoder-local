@@ -59,10 +59,9 @@ def main() -> None:
     block(
         f"Destructive git operation: /{hit}/.\n"
         "Это команды которые перетирают историю или теряют uncommitted работу.\n"
-        "Перед выполнением:\n"
-        "  1) подтверди у пользователя\n"
-        "  2) сделай fresh backup branch: git branch backup-$(date +%s)\n"
-        "  3) запусти с CLAUDE_ALLOW_GIT_DESTRUCTIVE=1\n"
+        "Перед выполнением не обходи хук сам:\n"
+        "  1) остановись и спроси оунера\n"
+        "  2) если он подтвердит — сначала fresh backup branch (git branch backup-...)\n"
         "Безопасные альтернативы:\n"
         "  reset --hard → reset --keep, или stash && reset\n"
         "  push --force → push --force-with-lease\n"

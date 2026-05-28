@@ -151,7 +151,8 @@ def main() -> None:
             "  - использовать одинарные кавычки чтобы сделать $() literal\n"
             "  - передать текст через stdin: printf '...' | gh ...\n"
             "  - использовать --body-file вместо inline --body\n"
-            "  - если точно нужна подстановка: CLAUDE_ALLOW_INJECTION=1"
+            "  - пишешь содержимое файла? используй Edit/Write/apply_patch, не shell\n"
+            "  - сомневаешься — остановись и спроси оунера; сам хук не обходи"
         )
 
     # Non-trivial but non-destructive = advisory block
@@ -161,7 +162,8 @@ def main() -> None:
         f"Non-trivial shell substitution: {nontrivial_hits[0]}\n"
         "Подстановка с side effects. Подтверди что она намеренная.\n"
         "Trivial substitutions (pwd, date, whoami, basename, dirname, echo) проходят.\n"
-        "Если ок - CLAUDE_ALLOW_INJECTION=1."
+        "Пишешь содержимое файла? используй Edit/Write/apply_patch, не shell-heredoc.\n"
+        "Сомневаешься — остановись и спроси оунера; сам хук не обходи."
     )
 
 

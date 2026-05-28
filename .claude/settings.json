@@ -53,6 +53,7 @@
       "Bash(make wt-new:*)",
       "Bash(make setup:*)",
       "Bash(gh pr merge:*)",
+      "Bash(git push origin --delete feature/:*)",
       "Bash(gh pr view:*)",
       "Bash(gh pr create:*)",
       "Bash(gh pr list:*)",

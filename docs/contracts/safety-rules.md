@@ -113,7 +113,7 @@ exclude-newer = "7 days"
 Никогда:
 - `git commit --no-verify` — наш custom git-no-verify-guard в `.claude/hooks/` заблокирует (wiring в `.claude/settings.json` для Claude Code и в `.codex/hooks.json` для Codex).
 - `git push --force` / `git push --force-with-lease` — на main вообще запрещено; на feature-ветке после открытия PR — тоже (ломает history для cross-review).
-- Прямой `git push origin main` — запрещён, всё идёт через PR + `gh pr merge --squash --delete-branch`. Исключение — emergency-revert по явному «ок» оунера (см. `./dev-workflow.md` §3).
+- Прямой `git push origin main` — запрещён, всё идёт через PR (merge: `gh pr merge --squash` + `git push origin --delete feature/<slug>`, НЕ `--delete-branch` — из worktree упрётся; см. `./dev-workflow.md` §2.7). Исключение — emergency-revert по явному «ок» оунера (см. `./dev-workflow.md` §3).
 - `git config user.*` без явного запроса оунера.
 - `git reset --hard` после коммитов, которые видел оунер (потеря истории).
 - `gh auth logout`.

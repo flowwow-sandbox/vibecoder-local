@@ -4,7 +4,10 @@
 # `git worktree list --porcelain`, independent of current cwd).
 MAIN_TOPLEVEL := $(shell git worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p' | head -1)
 MAIN_REPO_NAME := $(notdir $(MAIN_TOPLEVEL))
-WT_DIR := $(MAIN_TOPLEVEL)-wt
+# Worktrees live INSIDE the repo (.worktrees/, gitignored): a sibling dir
+# would fall outside the project root, which working-directory-guard blocks,
+# and outside a Codex workspace, which can't write there.
+WT_DIR := $(MAIN_TOPLEVEL)/.worktrees
 
 .DEFAULT_GOAL := help
 
