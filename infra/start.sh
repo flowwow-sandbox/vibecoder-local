@@ -30,7 +30,10 @@ case "${OSTYPE:-$(uname -s)}" in
     OS=Linux
     ;;
   msys*|cygwin*|win32*|MINGW*)
-    human_err "Windows не поддержан на пилоте." "   На пилоте поддержаны macOS (рекомендуется) и Linux (best-effort). Используй WSL2 или Linux-машину."
+    human_err "Похоже, скрипт запущен в нативном Windows (Git Bash / PowerShell)." \
+      "   На Windows пилот работает внутри WSL2 (Ubuntu) — там окружение = Linux и скрипт работает.
+   Установи WSL2 (PowerShell от администратора → wsl --install → перезагрузка), открой Ubuntu
+   и запусти ./infra/start.sh оттуда. Подробнее — docs/runbooks/troubleshooting.md (раздел про Windows)."
     ;;
   *)
     human_err "Неизвестная ОС: ${OSTYPE:-$(uname -s)}." "   На пилоте поддержаны macOS и Linux (best-effort)."
