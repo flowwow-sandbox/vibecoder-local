@@ -49,7 +49,7 @@
 - **`start.sh` падает с `gh auth`-ошибкой** — редко (оунер обычно уже авторизован при клонировании репо). Скажи оунеру: «В терминале набери `gh auth login`, откроется браузер, авторизуй; потом скажи "готово"».
 
 - **Агент не вызывает `brainstorming` / `requesting-code-review` / `systematic-debugging` (скилы `superpowers` недоступны)** — плагин методологии не установлен. Сам поставить не могу (это slash-команда тула), relay оунеру под его тул:
-- **Claude Code:** обычно ставится сам при открытии репо (прописан в `.claude/settings.json` → `enabledPlugins`); если предложения не было — `/plugin install superpowers@claude-plugins-official`, затем `/reload-plugins`.
+- **Claude Code:** выбери «Code» → «Customize» → «Personal plugins» → «Add plugin» → «Browse plugins», найди superpowers и нажми Установить.
 - **Codex:** `/plugins` → найди «superpowers» → Install.
 
 - **Claude ведёт себя странно (читает не те файлы / коммитит без тестов)** — проверь, что hooks на месте:
