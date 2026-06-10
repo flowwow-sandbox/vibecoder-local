@@ -46,6 +46,10 @@ TRIVIAL_CMDS = {
 
 SUBST_REGEX = re.compile(r"\$\(([^()]*(?:\([^()]*\)[^()]*)*)\)")
 BACKTICK_REGEX = re.compile(r"`([^`]+)`")
+# Quoted-heredoc body: <<'EOF' / <<"EOF" / <<-'EOF' opener, then literal text up to
+# a line whose only content is the delimiter. Quoted delimiter ⇒ no shell expansion
+# inside ⇒ safe to strip before substitution scanning (see find_substitutions).
+QUOTED_HEREDOC_REGEX = re.compile(r"<<-?\s*(['\"])(\w+)\1.*?\n[ \t]*\2\b", re.DOTALL)
 
 DESTRUCTIVE_VERBS = re.compile(
     r"\b("
@@ -96,9 +100,16 @@ def find_substitutions(cmd: str) -> list[tuple[str, str]]:
     body: inner text
     """
     found: list[tuple[str, str]] = []
+    # Drop quoted-heredoc bodies first: <<'EOF' … EOF / <<"EOF" … EOF / <<-'EOF' …
+    # are LITERAL — the shell performs no $()/backtick expansion inside them. This
+    # is the common `gh pr create --body "$(cat <<'EOF' … EOF)"` form, where
+    # markdown inline-code like `CODEX_AUTH` must not be mis-read as a command
+    # substitution. Unquoted <<EOF DOES expand, so it is deliberately NOT stripped.
+    # Must run before the single-quote pass below, which would mangle the <<'DELIM'.
+    sanitized = QUOTED_HEREDOC_REGEX.sub("<<HEREDOC", cmd)
     # Skip single-quoted regions since $(...) is literal inside '...'
     # Approximate: remove content between unescaped single quotes
-    sanitized = re.sub(r"'[^']*'", "''", cmd)
+    sanitized = re.sub(r"'[^']*'", "''", sanitized)
     for m in SUBST_REGEX.finditer(sanitized):
         found.append(("$()", m.group(1)))
     for m in BACKTICK_REGEX.finditer(sanitized):
