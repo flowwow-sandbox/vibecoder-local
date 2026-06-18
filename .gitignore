@@ -28,6 +28,7 @@ htmlcov/
 
 # Локальные данные приложения (БД, загрузки, экспорты) — создаются в runtime
 app/data/
+/data/
 
 # Git worktrees (make wt-new кладёт их сюда)
 .worktrees/
