@@ -7,43 +7,43 @@
       {
         "matcher": "Bash",
         "hooks": [
-          {"type": "command", "command": "python3 .claude/hooks/destructive-command-guard.py"}
+          {"type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/destructive-command-guard.py\""}
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
-          {"type": "command", "command": "python3 .claude/hooks/git-destructive-guard.py"}
+          {"type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/git-destructive-guard.py\""}
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
-          {"type": "command", "command": "python3 .claude/hooks/command-injection-guard.py"}
+          {"type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/command-injection-guard.py\""}
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
-          {"type": "command", "command": "python3 .claude/hooks/git-no-verify-guard.py"}
+          {"type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/git-no-verify-guard.py\""}
         ]
       },
       {
         "hooks": [
-          {"type": "command", "command": "python3 .claude/hooks/secret-leak-guard.py"}
+          {"type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/secret-leak-guard.py\""}
         ]
       },
       {
         "matcher": "Bash|Edit|Write|NotebookEdit",
         "hooks": [
-          {"type": "command", "command": "python3 .claude/hooks/working-directory-guard.py"}
+          {"type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/working-directory-guard.py\""}
         ]
       }
     ],
     "PostToolUse": [
       {
         "hooks": [
-          {"type": "command", "command": "python3 .claude/hooks/api-key-leak-detector.py"}
+          {"type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/api-key-leak-detector.py\""}
         ]
       }
     ]
