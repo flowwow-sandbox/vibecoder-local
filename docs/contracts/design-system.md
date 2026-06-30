@@ -8,17 +8,17 @@
 ## 1. Логотип
 
 ### Доступные варианты
-- Основной логотип Flowwow (полноцветный, монохром, белый, фиолетовый).
+- Основной логотип Flowwow (B2C).
 - Логотип Flowwow Seller (для B2B-материалов).
 
 ### Правила использования
 | Правило | Значение |
 |---|---|
-| Минимальные охранные поля | `// не указано в брендбуке` — используй ≥ 0.5× высоты лого со всех сторон |
-| Минимальный размер | `// не указано в брендбуке` — рекомендую ≥ 24 px по высоте на экране |
-| Цветовые версии | Фиолетовый (`#370B27` — Deep Purpur), коралловый (`#FF7663`), белый, чёрный |
+| Высота на лендинге | `30px` |
+| Охранные поля | Соблюдать; не размещать другие элементы вплотную к логотипу. Если точное значение не указано в задаче — уточнить у пользователя / дизайнера |
+| Цветовые версии | Использовать официальные версии Flowwow / Flowwow Seller. На цветном фоне — белую или фиолетовую версию |
 | На цветном фоне | Использовать белую или фиолетовую версию для максимального контраста |
-| Что нельзя | `// не указано в брендбуке` — стандартно: не вращать, не растягивать, не менять цвета, не добавлять обводку/тень |
+| Что нельзя | Не растягивать, не вращать, не перекрашивать произвольно, не добавлять тень, обводку или эффекты |
 
 Если работаешь без файла лого — оставь текстовый placeholder `Flowwow` в `font-family: var(--ff-font-display)` цвета `--ff-color-deep-purpur`.
 
@@ -27,25 +27,25 @@
 ## 2. Цветовая палитра
 
 ### 2.1 Основной цвет — Coral
-Коралловый — главный фирменный цвет. Используется **как фон или как акцент** (CTA, выделение, фоновые блоки).
+Коралловый — фирменный акцент. Используется **как акцент или крупный цветовой блок**, но не как цвет body-текста.
 
 | Токен | HEX | RGB | Назначение |
 |---|---|---|---|
-| `--ff-color-coral` | `#FF7663` | `255, 118, 99` | Основной коралловый, CTA / фон / акцент |
+| `--ff-color-coral` | `#FF7663` | `255, 118, 99` | Акценты, крупные цветовые блоки |
 | `--ff-color-coral-shade-4` | `#FF9486` | `255, 148, 134` | Hover / светлее основного |
 | `--ff-color-coral-shade-3` | `#FFAFA4` | `255, 175, 164` | Декоративные плашки |
-| `--ff-color-coral-shade-2` | `#FFC9C2` | `255, 201, 194` | Светлый фон, badges |
-| `--ff-color-coral-shade-1` | `#FEE2DF` | `254, 226, 223` | Очень светлый фон секций |
+| `--ff-color-coral-shade-2` | `#FFC9C2` | `255, 201, 194` | Бейджи, декоративные плашки |
+| `--ff-color-coral-shade-1` | `#FEE2DF` | `254, 226, 223` | Светлые секции |
 
 ### 2.2 Тёмный «фирменный»
 | Токен | HEX | RGB | Назначение |
 |---|---|---|---|
-| `--ff-color-deep-purpur` | `#370B27` | `55, 11, 39` | Основной цвет текста, логотип, тёмные секции, footer |
+| `--ff-color-deep-purpur` | `#370B27` | `55, 11, 39` | Текст, логотип, тёмные секции, footer, primary CTA |
 
-> Это **не чёрный**. Всегда используй `#370B27` вместо `#000` для текста и тёмных поверхностей — это даёт фирменную «тёплую» темноту.
+> Это **не чёрный**. Всегда используй `#370B27` вместо `#000` / `#000000` для текста и тёмных поверхностей — это даёт фирменную «тёплую» темноту.
 
 ### 2.3 Дополнительные пастельные фоны
-Светлые оттенки для зонирования секций и фоновых композиций.
+Светлые оттенки для зонирования секций и фоновых композиций. Выбирай 1–2 оттенка на лендинг, не смешивай всю палитру в одном макете.
 
 | Токен | HEX | RGB | Настроение |
 |---|---|---|---|
@@ -54,31 +54,30 @@
 | `--ff-color-soft-purple` | `#F1ECFF` | `241, 236, 255` | Прохладный, технологичный |
 | `--ff-color-spring-blue` | `#DFEFFF` | `223, 239, 255` | Свежий, лёгкий |
 
-### 2.4 Утилитарные (производные) `// не указано в брендбуке`
-Для интерфейсной работы добавь нейтральные токены, выдержанные в тёплой гамме бренда:
-
-```css
---ff-color-bg:        #FFFFFF;
---ff-color-surface:   #FFFAF7;   /* тёплый off-white */
---ff-color-text:      #370B27;   /* deep purpur */
---ff-color-text-muted:#7A5A6E;   /* приглушённый */
---ff-color-border:    #EFE4DD;   /* мягкая граница */
---ff-color-success:   #2E8B57;   /* нейтральный, бренд не задаёт */
---ff-color-warning:   #C97A1A;
---ff-color-error:     #D14343;
-```
+### 2.4 Утилитарные токены
+| Токен | HEX | Назначение |
+|---|---|---|
+| `--ff-color-bg` | `#FFFFFF` | Основной фон страницы |
+| `--ff-color-surface` | `#F9F8F9` | Фон карточек и secondary-кнопок |
+| `--ff-color-text` | `#370B27` | Основной текст |
+| `--ff-color-text-muted` | `#7A5A6E` | Приглушённый текст, если не указано иначе |
+| `--ff-color-border` | `#D4C9D0` | Мягкая граница input / ghost-элементов |
+| `--ff-color-error` | `#D14343` | Ошибка в формах, если точный красный не указан в задаче |
 
 ### 2.5 Правила применения
-- **Один доминантный акцент на экране** — коралл. `deep-purpur` — это **neutral / dark surface** (текст, тёмные секции, footer), **не второй акцент**. Не миксуй коралл и deep-purpur как два равноправных CTA-цвета.
-- **Текст**: `--ff-color-deep-purpur` на светлом, белый на коралловом / тёмном.
-- **CTA**: фон `--ff-color-coral`, текст белый. Hover — `--ff-color-coral-shade-4`.
-- **Зонирование секций**: чередуй белый → `comfy-beige` → `soft-pink` / `spring-blue` / `soft-purple`. Не лепи все 4 пастельных фона подряд — выбирай 1–2 на лендинг.
-- **Контраст coral на белом**: `#FF7663` на `#FFFFFF` даёт contrast ratio ≈ 3.0:1. По WCAG AA это проходит **только для large text** (≥24 px regular или ≥18.7 px bold). Для body, UI-надписей, secondary-текста — **всегда** `deep-purpur` или белый, не коралл.
+- **Primary CTA**: фон `--ff-color-deep-purpur`, текст белый. На экране допустим только один доминантный CTA-цвет.
+- **Secondary CTA**: фон `--ff-color-surface` (`#F9F8F9`), текст `--ff-color-deep-purpur`.
+- **Deep Purpur** — фирменный тёмный neutral и primary CTA, **не заменяй его на чёрный**.
+- **Coral** не используется как цвет body-текста: на белом фоне контраст недостаточен для мелкого текста.
+- **На коралловом или тёмном фоне** основной текст — белый (`#FFFFFF`).
+- **Зонирование секций**: чередуй белый и 1–2 пастельных фона. Не лепи все 4 пастельных фона подряд.
 - **Mini Don'ts** (типовые ошибки, на которых ломается «фирменность»):
-  - ❌ `color: #000` → ✅ `color: var(--ff-color-deep-purpur)` (даже когда кажется «всё равно чёрный»).
-  - ❌ Кнопка `border-radius: 4px` → ✅ `var(--ff-radius-pill)`.
-  - ❌ Два равных CTA-цвета (коралл + deep-purpur одинакового веса) → ✅ один коралловый CTA, остальное — neutral.
-  - ❌ Body-текст коралловым → ✅ коралл только в крупных display-заголовках или decorative-элементах.
+  - ❌ `color: #000` → ✅ `color: var(--ff-color-deep-purpur)`.
+  - ❌ Primary-кнопка коралловая → ✅ `background: var(--ff-color-deep-purpur)`.
+  - ❌ Secondary-кнопка тёмная → ✅ `background: var(--ff-color-surface)`.
+  - ❌ Карточки на старом off-white surface → ✅ `background: #F9F8F9`.
+  - ❌ Тени на карточках / кнопках / изображениях → ✅ без теней.
+  - ❌ Body-текст коралловым → ✅ коралл только в акцентах и крупных цветовых блоках.
 
 ### 2.6 CSS-переменные одним блоком
 ```css
@@ -99,12 +98,13 @@
   --ff-color-soft-purple:   #F1ECFF;
   --ff-color-spring-blue:   #DFEFFF;
 
-  /* Derived utility (// не указано в брендбуке) */
+  /* Utility */
   --ff-color-bg:            #FFFFFF;
-  --ff-color-surface:       #FFFAF7;
+  --ff-color-surface:       #F9F8F9;
   --ff-color-text:          var(--ff-color-deep-purpur);
   --ff-color-text-muted:    #7A5A6E;
-  --ff-color-border:        #EFE4DD;
+  --ff-color-border:        #D4C9D0;
+  --ff-color-error:         #D14343;
 }
 ```
 
@@ -125,16 +125,17 @@ module.exports = {
           'comfy-beige':'#FFF1E5',
           'soft-purple':'#F1ECFF',
           'spring-blue':'#DFEFFF',
-          surface:      '#FFFAF7',
+          surface:      '#F9F8F9',
           'text-muted': '#7A5A6E',
-          border:       '#EFE4DD',
+          border:       '#D4C9D0',
+          error:        '#D14343',
         },
       },
       fontFamily: {
-        'ff-display': ['Flowfont', 'Unbounded', 'Manrope', 'system-ui', 'sans-serif'],
+        'ff-display': ['Flowfont', 'Manrope', 'system-ui', 'sans-serif'],
         'ff-text':    ['"COFO Sans Pro"', 'Manrope', 'Inter', 'system-ui', 'sans-serif'],
       },
-      borderRadius: { 'ff-pill': '999px', 'ff-lg': '24px', 'ff-xl': '32px' },
+      borderRadius: { 'ff-pill': '100px', 'ff-card': '40px', 'ff-block': '40px' },
     },
   },
 };
@@ -148,12 +149,12 @@ module.exports = {
 
 ### 3.1 Гарнитуры
 
-| Роль | Шрифт | Начертания | Letter spacing | Line height |
-|---|---|---|---|---|
-| **Дисплейный** (акцентные заголовки) | **Flowfont** | Regular | `0%` | `100–110%` |
-| **Основной** (тексты, UI) | **COFO Sans Pro** | Book, Medium, Bold, Black | `3%` | `100–110%` |
+| Роль | Шрифт | Fallback | Применение |
+|---|---|---|---|
+| **Display / крупные заголовки** | **Flowfont** | Manrope | Только h1/h2 и редко h3 |
+| **Text / UI** | **COFO Sans Pro** | Manrope | Body, кнопки, формы, навигация, карточки |
 
-> **Важно про letter-spacing**: для COFO Sans Pro брендбук задаёт **трекинг 3%** — это `letter-spacing: 0.03em`. Не забывай, иначе текст будет «не наш».
+Fallback Manrope применяется в Продуктовой песочнице, где фирменные шрифты недоступны по лицензии.
 
 ### 3.2 Фолбэки (шрифты проприетарные)
 Flowfont и COFO Sans Pro — проприетарные шрифты Flowwow, в Google Fonts их нет, **в `vibecoder` template они не распространяются и от платформы их получить нельзя**. Не пытайся попросить у админа / в `канал «Песочница / поддержка и новости»` — это всё равно не сработает.
@@ -161,11 +162,7 @@ Flowfont и COFO Sans Pro — проприетарные шрифты Flowwow, �
 **Дефолтная стратегия для пилотника — Manrope** (есть в Google Fonts, близок по геометрии и к Flowfont, и к COFO Sans Pro). Используй Manrope и для дисплея, и для основного текста. Никаких TODO «дождаться файлов» в коде не оставляй — это и есть финальный стек.
 
 ```css
-/* Дисплейный (Flowfont/Unbounded оставлены в стеке на случай, если у проекта */
-/* появится своя лицензия и @font-face — браузер автоматически приоритизирует) */
---ff-font-display: "Flowfont", "Unbounded", "Manrope", system-ui, sans-serif;
-
-/* Основной */
+--ff-font-display: "Flowfont", "Manrope", system-ui, sans-serif;
 --ff-font-text:    "COFO Sans Pro", "Manrope", "Inter", system-ui, -apple-system, sans-serif;
 ```
 
@@ -180,26 +177,48 @@ Flowfont и COFO Sans Pro — проприетарные шрифты Flowwow, �
 
 В этой раскладке: Manrope 400 = COFO Book, Manrope 500 = COFO Medium, Manrope 700 = COFO Bold, Manrope 800 ≈ COFO Black.
 
-### 3.3 Иерархия `// не указано в брендбуке`
-Брендбук фиксирует только гарнитуры, начертания, line-height и letter-spacing. Шкалу размеров я даю как рекомендацию, выровненную под типичный лендинг:
+### 3.3 Иерархия
+Дизайнер задал точную шкалу для лендингов. Не заменяй её clamp-рекомендациями, если в задаче не указана адаптивная шкала.
+
+| Токен | Семейство | Начертание | Размер | Применение |
+|---|---|---|---|---|
+| `--ff-text-h1-fw-xl` | Flowfont | Regular / Italic | `100px` | Короткий акцидентный заголовок Hero |
+| `--ff-text-h1-fw` | Flowfont | Regular / Italic | `80px` | Акцидентный заголовок Hero |
+| `--ff-text-h1` | COFO Sans Pro | Regular / Italic | `80px` | Заголовок Hero без Flowfont |
+| `--ff-text-h2` | COFO Sans Pro | Regular / Italic | `48px` | Заголовок блока |
+| `--ff-text-h3` | COFO Sans Pro | Regular / Italic | `36px` | Подзаголовок блока, вопрос в FAQ |
+| `--ff-text-h4` | COFO Sans Pro | Medium | `28px` | Заголовок карточки |
+| `--ff-text-h5` | COFO Sans Pro | Medium | `24px` | Заголовок элемента внутри карточки |
+| `--ff-text-h6` | COFO Sans Pro | Medium | `20px` | Заголовок внутри текста |
+| `--ff-text-md` | COFO Sans Pro | Book | `16px` | Основной текст |
+| `--ff-text-xs` | COFO Sans Pro | Book | `14px` | Сноска, placeholder, Open Graph |
+| `--ff-text-nav` | COFO Sans Pro | Book | `16px` | Пункты меню навигации |
 
 ```css
 :root {
-  /* Display */
-  --ff-text-display-1: clamp(48px, 7vw, 96px);   /* hero h1 */
-  --ff-text-display-2: clamp(36px, 5vw, 64px);   /* section h2 */
-  --ff-text-display-3: clamp(28px, 3.5vw, 44px); /* subsection */
-
-  /* Body */
-  --ff-text-xl: 22px;   /* lead / подзаголовок hero */
-  --ff-text-lg: 18px;   /* акцентный параграф */
-  --ff-text-md: 16px;   /* основной текст */
-  --ff-text-sm: 14px;   /* подписи, метаданные */
-  --ff-text-xs: 12px;   /* legal / footer */
+  --ff-text-h1-fw-xl: 100px;
+  --ff-text-h1-fw:    80px;
+  --ff-text-h1:       80px;
+  --ff-text-h2:       48px;
+  --ff-text-h3:       36px;
+  --ff-text-h4:       28px;
+  --ff-text-h5:       24px;
+  --ff-text-h6:       20px;
+  --ff-text-md:       16px;
+  --ff-text-xs:       14px;
+  --ff-text-nav:      16px;
 }
 ```
 
-### 3.4 Базовые стили
+### 3.4 Letter-spacing и Line-height
+| Стиль | Letter-spacing | Line-height |
+|---|---|---|
+| Flowfont (`h1 fw xl`, `h1 fw`) | `0` | `100–110%` |
+| COFO Sans Pro — заголовки (`h1–h3`) | `0` | `110–120%` |
+| COFO Sans Pro — карточки (`h4–h6`) | `0` | `120–130%` |
+| COFO Sans — body, nav-link, text xs | `0.03em` по брендбуку; допускается `0.01em`, если текст визуально слишком разрежен | `150%` |
+
+### 3.5 Базовые стили
 ```css
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -209,130 +228,240 @@ body {
   font-family: var(--ff-font-text);
   font-weight: 400;            /* COFO Sans Pro Book */
   font-size: var(--ff-text-md);
-  line-height: 1.05;           /* 100–110% */
-  letter-spacing: 0.03em;      /* 3% — см. caveat ниже */
+  line-height: 1.5;
+  letter-spacing: 0.03em;
   color: var(--ff-color-text);
   background: var(--ff-color-bg);
 }
 
-h1, h2, h3,
+h1, h2, h3, h4, h5, h6,
 .ff-display {
-  font-family: var(--ff-font-display);
-  font-weight: 400;            /* Flowfont Regular */
-  line-height: 1.0;            /* плотнее, 100% */
-  letter-spacing: 0;           /* 0% — у Flowfont трекинга нет */
+  margin: 0;
   color: var(--ff-color-text);
   text-wrap: balance;
 }
 
-h1 { font-size: var(--ff-text-display-1); }
-h2 { font-size: var(--ff-text-display-2); }
-h3 { font-size: var(--ff-text-display-3); }
+.ff-h1-fw-xl,
+.ff-h1-fw,
+.ff-display {
+  font-family: var(--ff-font-display);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
 
-strong, b { font-weight: 700; }   /* COFO Bold */
-.ff-black { font-weight: 900; }   /* COFO Black для редких ультра-акцентов */
+h1, h2, h3 {
+  font-family: var(--ff-font-text);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+h4, h5, h6 {
+  font-family: var(--ff-font-text);
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0;
+}
+
+.ff-h1-fw-xl { font-size: var(--ff-text-h1-fw-xl); }
+.ff-h1-fw { font-size: var(--ff-text-h1-fw); }
+h1 { font-size: var(--ff-text-h1); }
+h2 { font-size: var(--ff-text-h2); }
+h3 { font-size: var(--ff-text-h3); }
+h4 { font-size: var(--ff-text-h4); }
+h5 { font-size: var(--ff-text-h5); }
+h6 { font-size: var(--ff-text-h6); }
+
+strong, b { font-weight: 700; }
+.ff-black { font-weight: 800; }
 ```
 
-### 3.5 Правила применения
-- Дисплейный шрифт **только** для крупных заголовков (h1/h2 и редко h3). Для кнопок и UI — основной.
-- Не миксуй жирные начертания дисплея и текста в одной строке — это создаёт визуальный шум.
-- На коралловом фоне используй белый цвет, на пастельных — `deep-purpur`.
-
-> **Caveat про letter-spacing 0.03em на body.** В дизайн-софте «трекинг 3%» из брендбука обычно применяется к крупным надписям / uppercase. На body-тексте 14–16 px это создаёт заметно «разреженный» вид. Если визуально текст ощущается «не как на flowwow.com» — допустимо снизить до `0.01em` на body и оставить `0.03em` только на дисплейных размерах и UI-элементах с uppercase. Это компромисс «по букве доки vs по живому ощущению»; при сомнениях — спроси оунера, какой вариант ближе.
+### 3.6 Правила применения
+- Flowfont — только для акцидентных h1/h2 и редко h3. Для кнопок и UI — основной шрифт.
+- Если Flowfont недоступен, используй Manrope и не оставляй TODO в коде.
+- На коралловом или тёмном фоне используй белый цвет, на пастельных — `deep-purpur`.
+- Если размер заголовка не помещается на mobile, адаптацию уточни у пользователя / дизайнера или задай локальный mobile-size без изменения desktop-токена.
 
 ---
 
-## 4. Сетка и отступы `// не указано в брендбуке`
+## 4. Сетка и отступы
 
-Брендбук не задаёт layout-систему. Используй стандартную для современного лендинга 12-колоночную сетку и spacing-шкалу с базой 4 px:
+### 4.1 Сетка (desktop 1440px)
+Дизайнер задал сетку для базового разрешения `1440px`.
+
+| Параметр | Значение |
+|---|---|
+| Разрешение (базовое) | `1440px` |
+| Количество колонок | `6` |
+| Боковые отступы (margin) | `100px` |
+| Gutter | `20px` |
+| Ширина контента (между полями) | `1240px` |
 
 ```css
 :root {
-  /* Spacing scale (4-base) */
-  --ff-space-1:  4px;
-  --ff-space-2:  8px;
-  --ff-space-3:  12px;
-  --ff-space-4:  16px;
-  --ff-space-5:  24px;
-  --ff-space-6:  32px;
-  --ff-space-7:  48px;
-  --ff-space-8:  64px;
-  --ff-space-9:  96px;
-  --ff-space-10: 128px;
-
-  /* Container & layout */
-  --ff-container-max: 1280px;
-  --ff-container-pad: clamp(16px, 4vw, 48px);
-  --ff-section-pad-y: clamp(64px, 10vw, 128px);
-
-  /* Radii — крупные, скруглённые в духе бренда */
-  --ff-radius-sm: 8px;
-  --ff-radius-md: 16px;
-  --ff-radius-lg: 24px;
-  --ff-radius-xl: 32px;
-  --ff-radius-pill: 999px;
-
-  /* Shadow — мягкие тёплые тени */
-  --ff-shadow-sm: 0 2px 8px rgba(55, 11, 39, 0.06);
-  --ff-shadow-md: 0 8px 24px rgba(55, 11, 39, 0.08);
-  --ff-shadow-lg: 0 24px 64px rgba(55, 11, 39, 0.12);
+  --ff-container-max: 1440px;          /* внешняя ширина: 1240px контента + 2×100px поля */
+  --ff-container-pad-desktop: 100px;
+  --ff-grid-columns: 6;
+  --ff-grid-gutter: 20px;
 }
 
 .ff-container {
   max-width: var(--ff-container-max);
   margin-inline: auto;
-  padding-inline: var(--ff-container-pad);
+  padding-inline: var(--ff-container-pad-desktop);   /* боковые поля 100px → контент 1240px */
+}
+
+.ff-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--ff-grid-columns), minmax(0, 1fr));
+  gap: var(--ff-grid-gutter);
+}
+
+@media (max-width: 767px) {
+  .ff-container {
+    padding-inline: 16px;
+  }
+}
+```
+
+### 4.2 Отступы между секциями
+| Брейкпоинт | Значение |
+|---|---|
+| Desktop | `200px` |
+| Mobile | `100px` |
+
+```css
+:root {
+  --ff-section-gap-desktop: 200px;   /* целевой зазор МЕЖДУ соседними секциями */
+  --ff-section-gap-mobile: 100px;
 }
 
 .ff-section {
-  padding-block: var(--ff-section-pad-y);
+  padding-block: calc(var(--ff-section-gap-desktop) / 2);   /* 100px на сторону → 200px между секциями */
+}
+
+@media (max-width: 767px) {
+  .ff-section {
+    padding-block: calc(var(--ff-section-gap-mobile) / 2);  /* 50px на сторону → 100px между секциями */
+  }
+}
+```
+
+### 4.3 Отступы в блоках с карточками
+| Параметр | Desktop | Mobile |
+|---|---|---|
+| Gap между карточками | `20px` | `12px` |
+
+```css
+.ff-card-grid {
+  display: grid;
+  gap: 20px;
+}
+
+@media (max-width: 767px) {
+  .ff-card-grid { gap: 12px; }
+}
+```
+
+### 4.4 Отступы внутри карточки
+| Параметр | Значение |
+|---|---|
+| Внутренний padding карточки | `24px` |
+| Расстояние между элементами (группа / заголовок + подзаголовок) | `12px` |
+| Расстояние между смежными элементами | `8px` |
+| Минимальный отступ (иконка / метка / бейдж) | `4px` |
+
+```css
+:root {
+  --ff-card-pad: 24px;
+  --ff-gap-group: 12px;
+  --ff-gap-adjacent: 8px;
+  --ff-gap-min: 4px;
+}
+```
+
+### 4.5 Радиусы
+| Элемент | Radius |
+|---|---|
+| Кнопки | pill (`50%` / `border-radius: 100px`) |
+| Карточки | `40px` |
+| Крупные блоки и изображения | `40px` |
+| Input | pill (`50%` / `border-radius: 100px`) |
+
+```css
+:root {
+  --ff-radius-pill: 100px;
+  --ff-radius-card: 40px;
+  --ff-radius-block: 40px;
+}
+```
+
+### 4.6 Тени
+Тени **не используются ни на каких элементах**: ни кнопки, ни карточки, ни изображения, ни крупные блоки.
+
+```css
+:root {
+  --ff-shadow-none: none;
+}
+
+.ff-card,
+.ff-btn,
+.ff-hero__media,
+.ff-field__input {
+  box-shadow: none;
 }
 ```
 
 **Принципы**
-- Большие воздушные отступы между секциями (`--ff-section-pad-y`).
-- Скруглённые углы — фирменный приём, используется агрессивно (карточки, кнопки, изображения).
-- Картинки в карточках — `border-radius: var(--ff-radius-lg)` минимум.
+- Сетка на desktop: `6` колонок, контент `1240px` (контейнер `1440px`), `20px` gutter.
+- Между секциями — `200px` на desktop и `100px` на mobile.
+- Карточки, крупные блоки и изображения — radius `40px`.
+- Тени отсутствуют полностью.
 
 ---
 
 ## 5. Декоративная графика
 
-Брендбук выделяет **три типа графики**. ИИ-агенту: **не пытайся генерировать их SVG вручную** — это сложные иллюстрации. Вместо этого ставь placeholder’ы и проси у пользователя ассеты.
+Брендбук выделяет несколько типов графики. ИИ-агенту: **не пытайся генерировать фирменные иллюстрации SVG вручную** — это сложные иллюстрации. Вместо этого ставь placeholder’ы и проси у пользователя ассеты.
 
-### 5.1 2D-графика (базовая)
-Атрибуты «волшебного мира» Flowwow — летающие элементы, воздушные сюжеты. Дополняют типографику и продуктовые композиции.
+### 5.1 2D-графика / иллюстрации
+Используется по брендбуку и Figma UI-kit. Не генерируй логотипные образы самостоятельно.
 
-### 5.2 2D-графика (продуктовая)
-Иллюстрации более конкретных тем — цветы, букеты, подарки, торты, упаковка.
+### 5.2 3D-графика
+Используй официальную библиотеку 3D-ассетов по названию и категории. Если ассет недоступен — ставь технический placeholder.
 
-### 5.3 3D-графика
-3D-объекты для точной передачи продукта и подсветки лого / его частей. Самая «премиальная» категория.
+### 5.3 Генеративные изображения
+Допустимы только в фотореалистичном стиле, без холодных синих оттенков, в продуктовой стилистике. Если точный стиль не указан в задаче — уточнить у пользователя / дизайнера.
+
+### 5.4 Иконки
+Иконки брать из дизайн-системы; стиль и толщина линий должны быть едиными по UI-kit. Если иконка недоступна — используй placeholder и не смешивай разные стили.
 
 ### Placeholder в коде
 ```html
 <figure class="ff-illustration-placeholder"
-        style="aspect-ratio:1/1; background:var(--ff-color-coral-shade-1);
-               border-radius:var(--ff-radius-lg); display:grid; place-items:center;
-               font-family:monospace; font-size:14px; color:var(--ff-color-deep-purpur);">
-  <!-- DROP: 3D-иллюстрация продукта (букет / торт / коробка) -->
-  drop: 3d product illustration
+        style="aspect-ratio:1/1; background:var(--ff-color-surface);
+               border-radius:var(--ff-radius-block); display:grid; place-items:center;
+               box-shadow:none; font-family:monospace; font-size:14px;
+               color:var(--ff-color-deep-purpur);">
+  <!-- DROP: официальный 3D-ассет / продуктовое фото / фотореалистичное изображение -->
+  drop: official asset placeholder
 </figure>
 ```
 
 ---
 
-## 6. Tone of voice (голос бренда) `// не указано в брендбуке`
-
-Брендбук не содержит явной TOV-главы. Рекомендации выведены из визуальной системы (тёплая, эмоциональная, «волшебная»):
+## 6. Tone of voice (голос бренда)
 
 | Свойство | Как писать | Как **не** писать |
 |---|---|---|
-| Тон | Тёплый, дружелюбный, обращение на «ты» в B2C, на «вы» в B2B (Seller) | Сухой канцелярит, «уважаемый клиент» |
+| Тон | Тёплый, дружелюбный, понятный | Сухой, отстранённый тон |
+| B2C | Обращение на «ты» | Сухой канцелярит, «уважаемый клиент» |
+| B2B / Seller | Обращение на «вы» | Панибратство в деловом сценарии |
 | Длина | Короткие предложения, активный залог | Длинные обороты с «является», «осуществляется» |
 | Лексика | Простые слова, бытовые сравнения, эмоциональные глаголы (везём, дарим, радуем) | Маркетинговый штамп («инновационное решение», «уникальная возможность») |
 | Цифры | Конкретика: «4500 продавцов», «доставка за 60 минут» | Размытые «много», «быстро» |
-| Эмодзи | Сдержанно, 0–1 на блок, только релевантные (🌷🎁) | Каскад эмодзи на каждом подзаголовке |
+| Эмодзи | Сдержанно, 0–1 на блок, только релевантные | Каскад эмодзи на каждом подзаголовке |
 | Восклицания | Допустимы в CTA, редко в тексте | `!!!` в каждом предложении |
 
 ### Примеры заголовков
@@ -342,9 +471,9 @@ strong, b { font-weight: 700; }   /* COFO Bold */
 
 ---
 
-## 7. UI-компоненты `// не указано в брендбуке — производное`
+## 7. UI-компоненты
 
-Брендбук не содержит UI-кита. Сниппеты ниже — **рекомендация в духе бренда**: коралловые CTA, скруглённые формы, deep-purpur типографика. Их можно безопасно использовать на лендингах.
+Сниппеты ниже — базовые компоненты для лендингов в Песочнице. Не меняй значения из токенов, если задача не требует отдельного сценария.
 
 ### 7.1 Кнопки
 
@@ -354,51 +483,50 @@ strong, b { font-weight: 700; }   /* COFO Bold */
 
 <!-- Secondary -->
 <button class="ff-btn ff-btn--secondary">Узнать подробнее</button>
-
-<!-- Ghost -->
-<button class="ff-btn ff-btn--ghost">Отмена</button>
 ```
 
 ```css
 .ff-btn {
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 16px 28px;
+  border: 1px solid transparent;
+  border-radius: var(--ff-radius-pill);
+  box-shadow: none;
   font-family: var(--ff-font-text);
-  font-weight: 500;             /* COFO Medium */
   font-size: 16px;
+  font-weight: 500;
   line-height: 1;
   letter-spacing: 0.03em;
-  padding: 16px 28px;
-  border-radius: var(--ff-radius-pill);
-  border: 1px solid transparent;
   cursor: pointer;
   transition: background .15s ease, color .15s ease, border-color .15s ease;
 }
 
 .ff-btn--primary {
-  background: var(--ff-color-coral);
-  color: #fff;
-}
-.ff-btn--primary:hover { background: var(--ff-color-coral-shade-4); }
-
-.ff-btn--secondary {
   background: var(--ff-color-deep-purpur);
   color: #fff;
 }
-.ff-btn--secondary:hover { background: #4d1638; }
 
-.ff-btn--ghost {
-  background: transparent;
+.ff-btn--secondary {
+  background: var(--ff-color-surface);
   color: var(--ff-color-deep-purpur);
-  border-color: var(--ff-color-border);
 }
-.ff-btn--ghost:hover { background: var(--ff-color-surface); }
 
-/* Универсальный focus-ring для всех кнопок — обязателен для a11y */
+.ff-btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
 .ff-btn:focus-visible {
   outline: 2px solid var(--ff-color-coral);
   outline-offset: 3px;
 }
 ```
+
+Если hover-состояние для primary / secondary не указано в задаче — уточни у пользователя / дизайнера или используй состояние из UI-kit. Не добавляй универсальный opacity-hover для всех кнопок.
 
 ### 7.2 Карточка (фича / продукт)
 
@@ -407,7 +535,7 @@ strong, b { font-weight: 700; }   /* COFO Bold */
   <div class="ff-card__media">
     <!-- DROP: иллюстрация / фото продукта -->
   </div>
-  <h3 class="ff-card__title">Доставка за 60 минут</h3>
+  <h4 class="ff-card__title">Доставка за 60 минут</h4>
   <p class="ff-card__text">
     Курьер привозит букет в течение часа после оформления заказа.
   </p>
@@ -416,26 +544,37 @@ strong, b { font-weight: 700; }   /* COFO Bold */
 
 ```css
 .ff-card {
-  display: flex; flex-direction: column; gap: 16px;
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ff-gap-group);
+  padding: var(--ff-card-pad);
   background: var(--ff-color-surface);
-  border-radius: var(--ff-radius-lg);
-  border: 1px solid var(--ff-color-border);
+  border-radius: var(--ff-radius-card);
+  border: 0;
+  box-shadow: none;
 }
+
 .ff-card__media {
   aspect-ratio: 4 / 3;
-  background: var(--ff-color-coral-shade-1);
-  border-radius: var(--ff-radius-md);
+  background: #fff;
+  border-radius: var(--ff-radius-block);
+  box-shadow: none;
 }
+
 .ff-card__title {
-  font-family: var(--ff-font-display);
-  font-size: 24px; line-height: 1; letter-spacing: 0;
+  font-family: var(--ff-font-text);
+  font-size: var(--ff-text-h4);
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0;
   margin: 0;
 }
+
 .ff-card__text {
   margin: 0;
-  color: var(--ff-color-text-muted);
-  font-size: 16px; line-height: 1.4;
+  color: var(--ff-color-text);
+  font-size: var(--ff-text-md);
+  line-height: 1.5;
 }
 ```
 
@@ -446,77 +585,115 @@ strong, b { font-weight: 700; }   /* COFO Bold */
   <label class="ff-field">
     <span class="ff-field__label">Email</span>
     <input class="ff-field__input" type="email" placeholder="you@company.com" />
+    <span class="ff-field__helper">Helper-текст или ошибка</span>
   </label>
   <button class="ff-btn ff-btn--primary" type="submit">Получить доступ</button>
 </form>
 ```
 
 ```css
-.ff-form { display: grid; gap: 16px; }
+.ff-form { display: grid; gap: 20px; }
 
-.ff-field { display: grid; gap: 6px; }
+.ff-field { display: grid; gap: 8px; }
 .ff-field__label {
-  font-size: 14px; letter-spacing: 0.03em;
-  color: var(--ff-color-text-muted);
+  font-size: var(--ff-text-xs);
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+  color: var(--ff-color-text);
 }
+
 .ff-field__input {
   height: 52px;
   padding: 0 18px;
   border-radius: var(--ff-radius-pill);
   border: 1px solid var(--ff-color-border);
   background: #fff;
+  box-shadow: none;
   font: inherit;
   color: var(--ff-color-text);
-  transition: border-color .15s ease, box-shadow .15s ease;
+  transition: border-color .15s ease, opacity .15s ease;
 }
+
+.ff-field__input::placeholder {
+  color: var(--ff-color-text-muted);
+  font-size: var(--ff-text-xs);
+}
+
 .ff-field__input:focus {
-  outline: none;
   border-color: var(--ff-color-coral);
-  box-shadow: 0 0 0 4px var(--ff-color-coral-shade-1);
+}
+
+.ff-field__input:focus-visible {
+  outline: 2px solid var(--ff-color-coral);
+  outline-offset: 2px;
+}
+
+.ff-field__input:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+.ff-field--error .ff-field__input {
+  border-color: var(--ff-color-error);
+}
+
+.ff-field__helper {
+  font-size: var(--ff-text-xs);
+  line-height: 1.5;
+}
+
+.ff-field--error .ff-field__helper {
+  color: var(--ff-color-error);
 }
 ```
 
 ### 7.4 Badge / pill (категории, метки)
 
 ```html
-<span class="ff-badge ff-badge--coral">Новое</span>
 <span class="ff-badge ff-badge--pink">Хит</span>
 <span class="ff-badge ff-badge--purple">B2B</span>
 ```
 
 ```css
 .ff-badge {
-  display: inline-flex; align-items: center;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ff-gap-min);
   padding: 6px 14px;
   border-radius: var(--ff-radius-pill);
-  font-size: 13px; font-weight: 500; letter-spacing: 0.03em;
+  font-size: var(--ff-text-xs);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
   color: var(--ff-color-deep-purpur);
+  box-shadow: none;
 }
-.ff-badge--coral  { background: var(--ff-color-coral-shade-2); }
+
 .ff-badge--pink   { background: var(--ff-color-soft-pink); }
 .ff-badge--purple { background: var(--ff-color-soft-purple); }
 .ff-badge--blue   { background: var(--ff-color-spring-blue); }
 .ff-badge--beige  { background: var(--ff-color-comfy-beige); }
+.ff-badge--coral  { background: var(--ff-color-coral-shade-2); }
 ```
 
 ### 7.5 Hero-блок (типовая структура)
 
 ```html
-<section class="ff-section ff-hero" style="background: var(--ff-color-coral-shade-1);">
+<section class="ff-section ff-hero" style="background: var(--ff-color-soft-pink);">
   <div class="ff-container ff-hero__grid">
     <div class="ff-hero__copy">
-      <span class="ff-badge ff-badge--coral">Для бизнеса</span>
-      <h1>Откройте магазин на Flowwow</h1>
+      <span class="ff-badge ff-badge--pink">Для бизнеса</span>
+      <h1 class="ff-h1-fw">Откройте магазин на Flowwow</h1>
       <p class="ff-hero__lead">
         4500 продавцов уже зарабатывают на платформе. Подключение за один день, без вложений.
       </p>
       <div class="ff-hero__cta">
         <a class="ff-btn ff-btn--primary" href="#start">Начать</a>
-        <a class="ff-btn ff-btn--ghost" href="#more">Как это работает</a>
+        <a class="ff-btn ff-btn--secondary" href="#more">Как это работает</a>
       </div>
     </div>
     <div class="ff-hero__media">
-      <!-- DROP: 3D-иллюстрация / продуктовый коллаж -->
+      <!-- DROP: официальный 3D-коллаж или продуктовое фото -->
     </div>
   </div>
 </section>
@@ -524,24 +701,59 @@ strong, b { font-weight: 700; }   /* COFO Bold */
 
 ```css
 .ff-hero__grid {
-  display: grid; gap: 48px;
-  grid-template-columns: 1fr;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: center;
 }
-@media (min-width: 900px) {
-  .ff-hero__grid { grid-template-columns: 1.1fr 1fr; align-items: center; }
+
+.ff-hero__copy {
+  grid-column: span 3;
+  display: grid;
+  gap: var(--ff-gap-group);
 }
-.ff-hero__copy { display: grid; gap: 24px; }
+
 .ff-hero__lead {
-  font-size: var(--ff-text-xl);
-  line-height: 1.3;
+  font-size: var(--ff-text-md);
+  line-height: 1.5;
   color: var(--ff-color-text);
   max-width: 52ch;
+  margin: 0;
 }
-.ff-hero__cta { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.ff-hero__cta {
+  display: flex;
+  gap: var(--ff-gap-group);
+  flex-wrap: wrap;
+}
+
 .ff-hero__media {
+  grid-column: span 3;
   aspect-ratio: 1 / 1;
-  background: var(--ff-color-coral);
-  border-radius: var(--ff-radius-xl);
+  background: var(--ff-color-surface);
+  border-radius: var(--ff-radius-block);
+  box-shadow: none;
+}
+
+@media (max-width: 899px) {
+  .ff-hero__grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .ff-hero__copy,
+  .ff-hero__media {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Акцидентный hero-заголовок не помещается на 320px при фикс. desktop-размере
+     (§3.6): локальный mobile-size для примера, desktop-токен не трогаем.
+     Точный размер — зона дизайнера (§10), это разумный дефолт. */
+  .ff-hero__copy .ff-h1-fw {
+    font-size: clamp(36px, 9vw, var(--ff-text-h1-fw));
+  }
 }
 ```
 
@@ -550,8 +762,7 @@ strong, b { font-weight: 700; }   /* COFO Bold */
 ```html
 <footer class="ff-footer">
   <div class="ff-container ff-footer__grid">
-    <!-- TODO: заменить на <img src="/assets/flowwow-logo-white.svg" alt="Flowwow" height="28" />
-         когда получим .svg от админа платформы. Пока — текстовый placeholder. -->
+    <!-- Placeholder до появления официального белого логотипа Flowwow / Flowwow Seller -->
     <span class="ff-footer__logo">Flowwow</span>
     <nav class="ff-footer__nav">
       <a href="#">Покупателям</a>
@@ -568,17 +779,34 @@ strong, b { font-weight: 700; }   /* COFO Bold */
   background: var(--ff-color-deep-purpur);
   color: #fff;
   padding-block: 64px;
+  box-shadow: none;
 }
+
 .ff-footer__grid {
-  display: grid; gap: 32px;
+  display: grid;
+  gap: 32px;
 }
+
 .ff-footer__logo {
   font-family: var(--ff-font-display);
-  font-size: 24px; line-height: 1; letter-spacing: 0;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: 0;
   color: #fff;
 }
-.ff-footer__nav { display: flex; flex-wrap: wrap; gap: 24px; }
-.ff-footer__nav a { color: #fff; text-decoration: none; opacity: .85; }
+
+.ff-footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.ff-footer__nav a {
+  color: #fff;
+  text-decoration: none;
+  opacity: .85;
+}
+
 .ff-footer__nav a:hover { opacity: 1; }
 .ff-footer__legal { opacity: .6; }
 </style>
@@ -590,34 +818,51 @@ strong, b { font-weight: 700; }   /* COFO Bold */
 
 Проходит **до** L2 (демонстрации оунеру на локальном preview — см. `./dev-workflow.md` §2.6: `make preview` только для статичной заглушки, иначе команда стека).
 
-- [ ] Подключены CSS-переменные из раздела 2.6 и 3 в `:root`.
+- [ ] Подключены CSS-переменные из разделов 2–4 в `:root`.
 - [ ] `*, *::before, *::after { box-sizing: border-box; }` включён.
-- [ ] Текст по умолчанию — `--ff-color-deep-purpur`, **не** `#000`.
-- [ ] CTA — коралловый фон, белый текст, `border-radius: pill`. На странице **один** доминантный CTA-цвет (коралл); deep-purpur используется как neutral, не как второй акцент.
-- [ ] Заголовки h1/h2 — дисплейный шрифт с `letter-spacing: 0` и плотным line-height.
-- [ ] Параграфы — основной шрифт с `letter-spacing: 0.03em` (или 0.01em — см. caveat §3.5).
-- [ ] Hero / большие секции имеют один пастельный или коралловый фон, не «винегрет».
-- [ ] Углы карточек и изображений скруглены (≥ 16 px).
-- [ ] Между секциями — большие воздушные отступы (≈ 96–128 px на десктопе).
-- [ ] Иллюстрации и фото подставлены через placeholder’ы, если ассетов нет.
-- [ ] Контраст текста на коралловом фоне проверен: body-текст коралловым — запрещён (см. §2.5). Коралл-как-текст — только display ≥24 px.
-- [ ] Интерактивные элементы имеют `:focus-visible` стиль (кнопки, ссылки, поля).
-- [ ] Логотип не растянут, не повёрнут, не перекрашен в произвольный цвет.
+- [ ] Текст по умолчанию — `--ff-color-deep-purpur`, **не** `#000` / `#000000`.
+- [ ] Primary CTA — Deep Purpur фон, белый текст, `border-radius: pill`; на экране один доминантный CTA.
+- [ ] Secondary CTA — фон `#F9F8F9`, текст Deep Purpur.
+- [ ] Coral не используется как body-текст; на коралловом или тёмном фоне основной текст белый.
+- [ ] Карточки и secondary-фоны используют `#F9F8F9`.
+- [ ] Desktop-сетка: 6 колонок, контент `1240px` (контейнер `1440px` − 2×`100px` поля), `20px` gutter.
+- [ ] Между секциями: `200px` на desktop и `100px` на mobile.
+- [ ] Gap между карточками: `20px` desktop и `12px` mobile.
+- [ ] Padding карточки `24px`; внутренние расстояния: `12px`, `8px`, минимум `4px`.
+- [ ] Радиусы: кнопки и input pill / `100px`, карточки, крупные блоки и изображения `40px`.
+- [ ] Теней нет ни на одном элементе: кнопки, карточки, изображения, блоки.
+- [ ] Заголовки и body используют размеры, line-height и letter-spacing из раздела 3.
+- [ ] Hero использует h1 / h1 fw / h1 fw xl, один primary CTA и placeholder под 3D-коллаж или продуктовое фото.
+- [ ] Иллюстрации, 3D и иконки берутся из официальных ресурсов; если ассетов нет — стоит технический placeholder.
+- [ ] Генеративные изображения, если нужны, фотореалистичные, без холодных синих оттенков.
+- [ ] Логотип высотой `30px`, не растянут, не повёрнут, не перекрашен произвольно, без тени и обводки.
+- [ ] Интерактивные элементы имеют `:focus-visible` стиль; input содержит focus, disabled, error и placeholder-состояния.
 - [ ] Поднял лендинг в локальном preview (`make preview` — только для статичной заглушки, иначе команда стека; см. `./dev-workflow.md` §2.6) и проверил на 320 px (mobile) и 1440 px (desktop): hero не ломается, CTA остаётся видимым, текст не наезжает.
 
 ---
 
-## 9. Что **не** указано в брендбуке (зоны риска)
+## 9. Ограничения и запреты
 
-Если на эти темы прилетает задача — спроси у пользователя или ставь явный TODO, не выдумывай:
+- Тёмной темы нет — все лендинги только светлые.
+- Тени отсутствуют на всех элементах: ни кнопки, ни карточки, ни изображения.
+- Coral (`#FF7663`) не используется как цвет body-текста.
+- Deep Purpur (`#370B27`) не заменяется на `#000000`.
+- Логотип нельзя растягивать, вращать, перекрашивать произвольно, добавлять тень или обводку.
+- Не смешивать все пастельные фоны в одном лендинге — выбрать 1–2 оттенка.
+- На экране допустим только один доминантный CTA-цвет: Deep Purpur для primary.
+- ИИ-агент не рисует фирменные иллюстрации самостоятельно — только ставит placeholder.
+- Генеративные изображения — только фотореалистичный стиль, без холодных синих оттенков.
 
-- Сетка, breakpoints, контейнеры.
-- Spacing scale.
-- Радиусы и тени.
-- Шкала размеров шрифта (display 1/2/3, body sizes).
-- Стили состояний UI (hover / focus / disabled / loading / error).
-- Иконография (стиль линий, weight, набор).
+---
+
+## 10. Что **не** указано в брендбуке (зоны риска)
+
+Если на эти темы прилетает задача — спроси у пользователя / дизайнера или ставь явную пометку, не выдумывай:
+
+- Точные mobile-размеры типографики для всех заголовков.
+- Breakpoints, кроме указанной проверки mobile и desktop.
+- Hover-состояния primary / secondary CTA, если они не указаны в задаче или UI-kit.
+- Точный красный для error-состояния, если нужен брендовый error-token.
 - Анимации и motion-принципы.
-- Тёмная тема.
 - Стили графиков, таблиц, инфографики.
-- Tone of voice, словарь, табу-слова.
+- Любые ассеты, которых нет в Figma / официальной библиотеке.
