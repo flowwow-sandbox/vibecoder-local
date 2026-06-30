@@ -8,7 +8,7 @@
 
 | Категория | Разрешено | Не рекомендуется / запрещено |
 |---|---|---|
-| Runtime | Node.js ≥ 20 LTS, Bun ≥ 1.x, Python ≥ 3.11 | Deno (плохо ложится на ghcr.io flow); legacy Node ≤ 18 |
+| Runtime | Node.js ≥ 24 LTS, Bun ≥ 1.x, Python ≥ 3.11 | Deno (плохо ложится на ghcr.io flow); Node ≤ 22 (Node 20 EOL 2026-04-30; 24 — текущий LTS) |
 | Веб-слой (JS) | Vanilla `node:http`, Hono, Fastify | Next.js, NestJS, Nuxt, Remix — допустимы только если оунер явно настаивает (тогда проговори overhead) |
 | Веб-слой (Python) | Flask, FastAPI | Django (overhead для пилота) |
 | Фронт | Vanilla HTML+JS, HTMX (стартовый дефолт). Vue (через Vite) — когда оправдано, см. сигналы ниже | — |
