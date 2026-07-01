@@ -53,6 +53,52 @@ ALLOWED_WRITE_DIRS = [
     "/dev/stderr",
 ]
 
+# Claude Code пишет свою persistent-память инструментом Write в каталог
+# `memory/` текущего проекта. PreToolUse-хук иначе блокирует эти записи как
+# «вне корня проекта», поэтому разрешаем их СТРОГО (см. _is_session_memory_write):
+#   - только для Write-family инструментов — Codex сюда не пишет (его память —
+#     ~/.codex/*.sqlite, её ведёт сам рантайм, не tool-call);
+#   - только для памяти ЭТОЙ сессии/проекта (кросс-проектную запись не пускаем);
+#   - только дочерний `memory/` (не транскрипты `*.jsonl` и не сам config-dir).
+# ЗАМЕЧАНИЕ (known limitation): настройка Claude Code `autoMemoryDirectory` может
+# увести память в произвольный путь; тогда транскрипт остаётся под projects/, а
+# память — нет, и такая запись будет заблокирована (fail-closed). Осознанно НЕ
+# тянем чтение иерархии settings.json в safety-хук ради этого opt-in-кейса — если
+# пилот задал кастомный autoMemoryDirectory вне репо, пусть добавит его в
+# ALLOWED_WRITE_DIRS.
+_MEMORY_WRITE_TOOLS = {"Edit", "Write", "NotebookEdit"}
+
+
+def _session_memory_dir(transcript_path: str) -> str | None:
+    """Auto-memory dir текущей сессии: `<config>/projects/<project>/memory`.
+
+    Claude Code кладёт транскрипт в `<config>/projects/<project>/<session>.jsonl`
+    и передаёт его путь в hook-событии (`transcript_path`). Его родитель + `memory`
+    — авторитетный путь памяти именно этого проекта: не нужно ни реконструировать
+    slug, ни читать CLAUDE_CONFIG_DIR (транскрипт уже под актуальным config-dir),
+    и он привязан к ТЕКУЩЕМУ проекту (кросс-проектная память не совпадёт)."""
+    if not transcript_path:
+        return None
+    try:
+        return str(Path(transcript_path).expanduser().resolve().parent / "memory")
+    except (OSError, ValueError):
+        return None
+
+
+def _is_session_memory_write(target: str, tool_name: str, transcript_path: str) -> bool:
+    """True для Write-family записи в auto-память текущей сессии (см. _session_memory_dir)."""
+    if tool_name not in _MEMORY_WRITE_TOOLS or not target:
+        return False
+    mem = _session_memory_dir(transcript_path)
+    if not mem:
+        return False
+    try:
+        resolved_str = str(Path(target).expanduser().resolve())
+    except (OSError, ValueError):
+        return False
+    return resolved_str == mem or resolved_str.startswith(mem + os.sep)
+
+
 # Bash-команды, чьи аргументы трактуем как «target пишется». Если такая
 # команда содержит абсолютный путь вне репо/tmp — блок.
 WRITE_VERBS_REGEX = re.compile(
@@ -207,6 +253,7 @@ def main() -> None:
     event = read_event()
     tool_name = event.get("tool_name", "")
     tool_input = event.get("tool_input", {})
+    transcript_path = str(event.get("transcript_path", ""))
 
     root = _project_root()
 
@@ -219,7 +266,11 @@ def main() -> None:
             # MultiEdit / NotebookEdit могут хранить путь в notebook_path
             target = str(tool_input.get("notebook_path", ""))
         cmd_or_target = target
-        if target and not _path_is_allowed(target, root):
+        if (
+            target
+            and not _path_is_allowed(target, root)
+            and not _is_session_memory_write(target, tool_name, transcript_path)
+        ):
             violation = (tool_name, target)
     elif tool_name == "apply_patch":
         cmd_or_target = bash_command(tool_input)  # whole DSL string for bypass marker scan
