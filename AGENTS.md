@@ -77,6 +77,7 @@
 | «запусти онбординг», «настрой с нуля» | `docs/runbooks/onboarding.md` |
 | «я сменил ноутбук» | `docs/runbooks/recovery.md` |
 | «start.sh падает», «gitleaks ругается», «приложение не поднимается локально» | `docs/runbooks/troubleshooting.md` |
+| «обнови шаблон проекта» | `docs/runbooks/update-template.md` |
 
 ## Критические инварианты (всегда в силе)
 
