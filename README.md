@@ -9,5 +9,3 @@
 3. Дальше агент всё объяснит и проведёт сам.
 
 Если застрял — открой [sandbox.flowwow.co/learn](https://sandbox.flowwow.co/learn) или пиши в канал «Песочница».
-
-<!-- sync pipeline smoke-test 2026-05-26 -->

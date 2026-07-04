@@ -57,8 +57,7 @@ gh auth login
 `start.sh` и git-хуки (gitleaks) работают только в POSIX-среде. На Windows весь
 workflow живёт внутри **WSL2 (Ubuntu)** — там окружение = Linux.
 
-Рекомендованный путь на Windows — **Codex** (Claude Code на Windows в WSL пока не
-работает напрямую):
+На Windows поддержан **только Codex** (в WSL2); Claude Code на Windows не предлагаем:
 1. Установи WSL2: PowerShell от администратора → `wsl --install` → перезагрузка → создай пользователя Ubuntu.
 2. Открой терминал Ubuntu и выполни bootstrap (создаёт `~/code/`, ставит `gh`/`gitleaks`/`jq`/`envsubst`, авторизует `gh`):
    `curl -fsSL https://raw.githubusercontent.com/flowwow-sandbox/vibecoder-local/main/infra/bootstrap-wsl.sh | bash`
@@ -85,11 +84,11 @@ gh repo rename <correct-slug>
 
 ---
 
-### Симптом: `start.sh` отваливается на первом шаге
+### Симптом: `start.sh` пишет warning «репо ещё не создан?» при проверке slug
 
-`gh` авторизован, но репо ещё не запушен в GitHub.
+Если репо ещё не создан / не запушен в GitHub, `start.sh` НЕ падает: проверка «имя репо = slug» мягко пропускается с warning'ом «Не удалось получить имя репо через gh repo view (репо ещё не создан?)». Это ок до первого push'а.
 
-Действие: запушь ветку `main` в origin, затем повтори `./infra/start.sh`.
+Действие: чинить нечего. После первого push'а запусти `./infra/start.sh` ещё раз — проверка slug отработает.
 
 ---
 
@@ -101,7 +100,7 @@ gh repo rename <correct-slug>
 
 - App-код живёт в `app/` — команды стека запускай оттуда (`cd app && bun install`, `cd app && uv sync`), не из корня.
 - Статичная заглушка из онбординга поднимается через `make preview` (рендерит `app/index.html.tpl` с подстановкой `SANDBOX_SLUG`), не прямым открытием файла.
-- Рантаймы allowlist имеют version floors (Node ≥ 20, Python ≥ 3.11, Bun ≥ 1) — частая причина «у меня не стартует» на новом/чужом ноуте. Сверь версию (`node -v` / `python --version`) с `docs/contracts/safety-rules.md` §1.
+- Рантаймы allowlist имеют version floors (Node ≥ 24 LTS, Python ≥ 3.11, Bun ≥ 1) — частая причина «у меня не стартует» на новом/чужом ноуте. Сверь версию (`node -v` / `python --version`) с `docs/contracts/safety-rules.md` §1.
 
 Если падает не приложение, а `start.sh` или окружение — это Секция 1.
 

@@ -16,7 +16,7 @@ L2 не автоматизируется. Без явного «ок» от оу
 ### 2.1 Pre-work
 Понять задачу от оунера. Если непонятно — переспросить (см. AGENTS.md принцип №1). Важно: НЕ начинать кодить пока не ясен критерий приёмки.
 
-Если задача — нетривиальная фича (несколько файлов, новые абстракции, несколько шагов) — вызови `obra/superpowers:brainstorming` ДО кода. Если bug — вызови `obra/superpowers:systematic-debugging`.
+Если задача — нетривиальная фича (несколько файлов, новые абстракции, несколько шагов) — вызови `superpowers:brainstorming` ДО кода. Если bug — вызови `superpowers:systematic-debugging`.
 
 **Если фича создаёт новую call surface наружу** (HTTP-endpoint кроме `/healthz`, MCP tool, webhook receiver, публичная форма, file upload) — пройди pre-flight чек-лист из `./audience-and-exposure.md` §4 с оунером **до начала кода**. Чек-лист определяет тир (T1 / T2 / T3) и какие защиты (rate-limit, кэш, hard pagination limits) обязательны для тира.
 
@@ -48,7 +48,7 @@ L2 не автоматизируется. Без явного «ок» от оу
 
 ### 2.5 Cross-review через субагент (обязательно)
 
-Перед показом оунеру на L2 — вызови `obra/superpowers:requesting-code-review`. Это запускает субагента в той же сессии, который читает diff feature-ветки (`git diff main...feature/<slug>`) и возвращает замечания. Это **обязательный** шаг, а не опциональный: cross-review субагентом ловит ошибки, которые автор-агент пропускает.
+Перед показом оунеру на L2 — вызови `superpowers:requesting-code-review`. Это запускает субагента в той же сессии, который читает diff feature-ветки (`git diff main...feature/<slug>`) и возвращает замечания. Это **обязательный** шаг, а не опциональный: cross-review субагентом ловит ошибки, которые автор-агент пропускает (в Codex, где skill'ов и субагентов нет — отдельный review-проход по diff'у в новом контексте).
 
 Фиксы по замечаниям — атомарными коммитами в той же feature-ветке. Когда review зелёный — переходи к §2.6.
 
@@ -90,7 +90,7 @@ gh pr merge --squash                       # squash-merge на GitHub (без л
 
 Локальную чистку делает `make wt-prune` из основного worktree: вернись в корень репо (`cd`), синхронизируй main (`git pull --ff-only`) и запусти `make wt-prune` — она снимает worktree, чьи origin-ветки уже удалены (PR влит), и удаляет их локальные ветки; worktree с незакоммиченными изменениями пропускает с предупреждением. Точечно — `git worktree remove .worktrees/<slug>`.
 
-**Branch model:** разработка в feature-ветке `feature/<slug>` → commit (§2.4) → cross-review субагентом (§2.5) → local preview (§2.6) → PR → squash-merge в main. Прямой `git push origin main` запрещён (хук + permissions не пропустят).
+**Branch model:** разработка в feature-ветке `feature/<slug>` → commit (§2.4) → cross-review субагентом (§2.5) → local preview (§2.6) → PR → squash-merge в main. Прямой `git push origin main` запрещён политикой (см. `./safety-rules.md` §3).
 
 ## 3. Rollback
 
@@ -101,16 +101,16 @@ gh pr merge --squash                       # squash-merge на GitHub (без л
 
 | Ситуация | Skill |
 |---|---|
-| Нетривиальный bug (3+ места, неясная причина) | `obra/superpowers:systematic-debugging` |
-| Большая фича / архитектурное решение | `obra/superpowers:brainstorming` → `writing-plans` |
-| Перед L2 — cross-review субагентом (**mandatory**, см. §2.5) | `obra/superpowers:requesting-code-review` |
-| Реализация по готовому плану | `obra/superpowers:executing-plans` или `subagent-driven-development` |
+| Нетривиальный bug (3+ места, неясная причина) | `superpowers:systematic-debugging` |
+| Большая фича / архитектурное решение | `superpowers:brainstorming` → `writing-plans` |
+| Перед L2 — cross-review субагентом (**mandatory**, см. §2.5) | `superpowers:requesting-code-review` (в Codex, где skill'ов и субагентов нет — отдельный review-проход по diff'у в новом контексте) |
+| Реализация по готовому плану | `superpowers:executing-plans` или `subagent-driven-development` |
 
 ## 5. Conventions
 
 ### 5.1 Branches & commits
 
-- **Branch model:** `main` всегда зелёный. Разработка в feature-ветке `feature/<slug>` (рекомендуется через worktree, `make wt-new SLUG=<slug>`) → commit (§2.4) → cross-review субагентом (§2.5) → L2 (§2.6) → PR → squash-merge в main. Прямой `git push origin main` запрещён (хуки + правила не пропустят). Исключения — emergency-revert (см. §3).
+- **Branch model:** `main` всегда зелёный. Разработка в feature-ветке `feature/<slug>` (рекомендуется через worktree, `make wt-new SLUG=<slug>`) → commit (§2.4) → cross-review субагентом (§2.5) → L2 (§2.6) → PR → squash-merge в main. Прямой `git push origin main` запрещён политикой (см. `./safety-rules.md` §3). Исключение — emergency-revert (см. §3).
 - **Commit-сообщения:** imperative mood (`add slug validation`, не `added`), ≤ 72 символа в первой строке. Свободный текст; conventional commits (`feat:`/`fix:`) НЕ требуются.
 - **Атомарность:** один логический change = один коммит в feature-ветке. Если коммит > 300 строк изменений — скорее всего его надо разделить. При squash-merge все коммиты feature-ветки сворачиваются в один на main — заголовок PR станет заголовком squash-коммита, поэтому формулируй его осмысленно.
 - **PR-merge (из worktree):** `gh pr merge --squash` + `git push origin --delete feature/<slug>` — НЕ `--delete-branch` (из worktree его локальная чистка упрётся в `main`, занятый основным worktree; см. §2.7). Затем из основного worktree: `git pull --ff-only` + `make wt-prune`.

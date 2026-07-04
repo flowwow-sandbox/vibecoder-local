@@ -35,7 +35,13 @@ setup:
 	if [ "$$os" != "Darwin" ]; then \
 	  echo "make setup ставит утилиты автоматически только на macOS (через Homebrew)."; \
 	  echo "На твоей ОС поставь вручную: gh, gitleaks, jq, gettext."; \
-	  echo "  Debian/Ubuntu: sudo apt update && sudo apt install -y gh gitleaks jq gettext-base"; \
+	  echo "  Debian/Ubuntu:"; \
+	  echo "    jq, gettext-base: sudo apt update && sudo apt install -y jq gettext-base"; \
+	  echo "    gh, gitleaks: сначала попробуй apt (sudo apt install -y gh gitleaks — в свежих"; \
+	  echo "        Ubuntu они есть в universe); если пакет не нашёлся:"; \
+	  echo "        gh — из официального репо cli.github.com"; \
+	  echo "        (https://github.com/cli/cli/blob/trunk/docs/install_linux.md),"; \
+	  echo "        gitleaks — release-бинарь с https://github.com/gitleaks/gitleaks/releases"; \
 	  echo "  Другое: https://cli.github.com  и  https://github.com/gitleaks/gitleaks"; \
 	  echo "Потом запусти ./infra/start.sh — он проверит, что всё на месте."; \
 	  exit 0; \

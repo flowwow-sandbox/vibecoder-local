@@ -13,7 +13,7 @@
 | Веб-слой (Python) | Flask, FastAPI | Django (overhead для пилота) |
 | Фронт | Vanilla HTML+JS, HTMX (стартовый дефолт). Vue (через Vite) — когда оправдано, см. сигналы ниже | — |
 | Сборщик / UI-фреймворк | Vite + Vue — default-approved (агент выбирает сам, проговорив оунеру; эскалация не нужна). HTMX/Vanilla — стартовый дефолт. | React, Svelte и прочие UI-фреймворки (благословлён ровно один — Vue, чтобы не плодить N наборов паттернов) |
-| Хранение | SQLite (`better-sqlite3` для Node, `sqlite3` для Python), файлы под `app/data/` | Внешние БД (Postgres, Redis) — нет в инфре пилота |
+| Хранение | SQLite (`better-sqlite3` для Node, `sqlite3` для Python), файлы под `app/data/` | Поднимать свою внешнюю БД (Postgres, Redis) нельзя — нет в инфре пилота. Read-only доступ (только SELECT) к существующей корпоративной БД возможен: запрашивается у ответственного за платформу через канал «Песочница», выдаётся отдельными реквизитами |
 | Бандл | Без бандлера, esbuild, Vite | Webpack (зоопарк зависимостей) |
 | Тесты | Vitest, Bun test, pytest, `node:test` | — |
 
@@ -46,7 +46,7 @@
 
 ### 1.2.1 Auth и роли (потолок v=1 — shared-secret)
 
-Threat model: песочница VPN-only — VPN это **первый слой** (посторонние не попадают в принципе). App-level auth решает «какой сотрудник что может», а не «не пускать чужих».
+Threat model: приложение работает локально / в закрытом контуре — посторонние не достучатся. App-level auth решает «какой сотрудник что может», а не «не пускать чужих».
 
 - Источник identity: **shared-secret** (SSO/OIDC пилотникам недоступен, отложено).
 - Паттерн: пароль (храни **hash** в env, не plaintext) **или** invite-коды + **signed session cookie** + роли `admin` / `editor` / `viewer` в SQLite.
@@ -55,6 +55,7 @@ Threat model: песочница VPN-only — VPN это **первый слой
 ### 1.2.2 Notifications (только исходящие вебхуки)
 
 - Каналы: **Pachca webhook**, **Telegram-бот**, generic **webhook callbacks**.
+- **Telegram:** локальное приложение не примет inbound-вебхук — используй long-polling `getUpdates` (см. `./audience-and-exposure.md` §2).
 - **Email/SMTP недоступен** — у тебя нет SMTP-секретов. «Нотификации» = исходящие вебхуки, не email.
 - Токены каналов (Telegram bot token, Pachca webhook URL) держи в `.env` локально (см. §4), не в коде.
 
@@ -121,7 +122,7 @@ exclude-newer = "7 days"
 Всегда:
 - Атомарные коммиты в imperative mood.
 - `.env` в `.gitignore` (там уже).
-- Auto-commit-skill из `obra/superpowers` коммитит после каждой атомарной задачи в feature-ветке.
+- Политика Auto-commit (см. `./dev-workflow.md` §2.4): агент коммитит после каждой атомарной задачи в feature-ветке.
 
 ### 3.1 Запрет bypass хуков через env-переменные
 
@@ -160,7 +161,7 @@ exclude-newer = "7 days"
 | `gh repo delete` | ⚠️ Только по явному запросу оунера | — |
 | `gh auth logout` | ❌ Запрещено политикой | — (текстовое правило) |
 
-**Recovery scenarios** (закоммитил `.env`, откат коммита, откат деплоя, `rebase -i` ситуация) — `docs/runbooks/troubleshooting.md` секция «Git recovery».
+**Recovery scenarios** (закоммитил `.env`, откат коммита, `rebase -i` ситуация) — `docs/runbooks/troubleshooting.md`, секции «Git / gitleaks» и «Git / откат».
 
 ## 4. Секреты
 
