@@ -59,7 +59,26 @@
 
 ## Где что искать
 
-### Контракты
+### Порядок чтения
+
+| Делаю | Читаю по порядку |
+|---|---|
+| Верстаю экран или страницу | дизайн-контракт по поверхности (ниже) |
+| Пишу прикладной код | `docs/contracts/dev-workflow.md` → `docs/contracts/app-security.md` → `docs/contracts/safety-rules.md` |
+| Оунер попросил операцию | runbook по событию |
+
+### Дизайн: какую поверхность делаешь
+
+| Что делаешь | Куда |
+|---|---|
+| Маркетинговый лендинг, промо-страница | `docs/contracts/design-system.md` |
+| Клиентский продуктовый веб: каталог, магазин, поиск, фильтры, карточки, корзина, оформление заказа, отзывы, чат, главная | `docs/contracts/client-web-rules.md` |
+| B2B-интерфейс корпоративного клиента: бизнес-аккаунт, реквизиты, корпоративные товары, ограничения, оплата | `docs/contracts/client-web-rules.md`, затем `docs/contracts/b2b-corporate-web-rules.md` |
+| Админка селлера | `docs/contracts/seller-admin-web-rules.md` |
+
+> **Один интерфейс — один набор токенов.** `design-system.md` — лендинговый набор: Coral / Deep Purpur, radius `40px`, теней нет. `client-web-rules.md` — продуктовый: Grey-шкала, radius `12px`, тени у попапов. В одном экране их не смешивают; если непонятно, к какой поверхности относится задача, — спроси оунера.
+
+### Процесс и защита
 
 | Что нужно | Куда |
 |---|---|
@@ -67,10 +86,9 @@
 | Безопасность + allowlist технологий | `docs/contracts/safety-rules.md` |
 | Пишешь app-код: как не написать уязвимость (XSS, SQLi, валидация, authz, секреты в бандле) | `docs/contracts/app-security.md` |
 | Это публичный или внутренний пилот? Какие защиты обязательны? | `docs/contracts/audience-and-exposure.md` |
-| Верстаешь лендинг / UI: цвета, шрифты, компоненты Flowwow | `docs/contracts/design-system.md` |
 | Чек-лист методологии (brainstorm → plan → tests → code → review) | `docs/contracts/methodology.md` |
 
-### Runbook'и (event-driven сценарии)
+### Runbook'и: событие → сценарий
 
 | Когда оунер пишет... | Запускаешь runbook |
 |---|---|
