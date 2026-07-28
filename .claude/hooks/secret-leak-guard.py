@@ -54,8 +54,10 @@ SECRET_DIR_REGEX = re.compile(
     re.IGNORECASE,
 )
 
+# jq/yq читают файл целиком и печатают его — для `.env` это ровно та же утечка,
+# что и `cat`, но их в списке не было.
 BASH_READ_VERBS = re.compile(
-    r"\b(cat|less|more|head|tail|grep|rg|ripgrep|bat|xxd|hexdump|source|\.)\s+\S",
+    r"\b(cat|less|more|head|tail|grep|rg|ripgrep|bat|xxd|hexdump|jq|yq|source|\.)\s+\S",
     re.IGNORECASE,
 )
 

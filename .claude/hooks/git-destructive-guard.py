@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 """PreToolUse: block destructive git operations.
 
-Covers: reset --hard, push --force, branch -D, clean -fdx, checkout -- .,
-amend on published commits. Bypass: CLAUDE_ALLOW_GIT_DESTRUCTIVE=1.
+Covers: reset --hard, push --force (включая --force-with-lease), branch -D,
+clean -fdx, checkout -- ., interactive rebase, filter-branch.
+
+Таблица «что блокируется» — docs/contracts/safety-rules.md §3.2; список ниже и
+та таблица должны совпадать построчно.
+
+Bypass: только CLAUDE_ALLOW_GIT_DESTRUCTIVE=1 в окружении, из которого запущен
+агент-тул (см. safety_common.bypass).
 """
 from __future__ import annotations
 
@@ -18,12 +24,18 @@ from safety_common import (  # noqa: E402
     bypass,
     log,
     read_event,
+    strip_git_global_opts,
 )
 
 PATTERNS = [
     r"\bgit\s+reset\s+--hard\b",
-    r"\bgit\s+(push\s+)?(-f|--force(?!-with-lease))\b",
-    r"\bgit\s+push\s+.*--force(?!-with-lease)",
+    # --force-with-lease тоже блокируется: политика пилота запрещает переписывать
+    # уже опубликованную историю в любой форме (safety-rules §3), а «вежливый»
+    # вариант ломает cross-review ровно так же — ревьюер теряет базу diff'а.
+    # Но именно эти две формы, не всё с префиксом `--force-`: `--force-if-includes`
+    # ничего не форсит, а требует, чтобы удалённые изменения были влиты локально.
+    r"\bgit\s+(push\s+)?(-f|--force(-with-lease)?)(\b|=)(?!-)",
+    r"\bgit\s+push\s+.*--force(-with-lease)?(\s|=|$)",
     r"\bgit\s+branch\s+-D\b",
     r"\bgit\s+clean\s+-[fdxX]{2,}",
     r"\bgit\s+clean\s+-[fdx]\s+-[fdx]",
@@ -32,7 +44,10 @@ PATTERNS = [
     r"\bgit\s+restore\s+--staged\s+--worktree\s+\.",
     r"\bgit\s+filter-(branch|repo)\b",
     r"\bgit\s+update-ref\s+-d\s+refs/heads/(main|master|prod(uction)?)",
-    r"\bgit\s+rebase\s+.*-i.*\s+HEAD",  # interactive rebase - often destructive
+    # Интерактивный rebase — независимо от того, куда: `-i HEAD~3`, `-i main`,
+    # `--interactive origin/main`. Привязка к литеральному HEAD пропускала две
+    # последние формы, хотя safety-rules §3.2 обещает блок для всех.
+    r"\bgit\s+rebase\b[^\n]*\s(-i|--interactive)(\s|$)",
     r"\bgit\s+reflog\s+expire\s+--expire=now",
     r"\bgit\s+gc\s+--prune=now\s+--aggressive",
 ]
@@ -47,7 +62,9 @@ def main() -> None:
     if not cmd:
         allow()
 
-    hit = any_match(cmd, PATTERNS)
+    # Матчим по команде без глобальных опций (`git -C app push …` → `git push …`),
+    # но в лог и в сообщение отдаём исходный текст.
+    hit = any_match(strip_git_global_opts(cmd), PATTERNS)
     if not hit:
         allow()
 
@@ -64,8 +81,9 @@ def main() -> None:
         "  2) если он подтвердит — сначала fresh backup branch (git branch backup-...)\n"
         "Безопасные альтернативы:\n"
         "  reset --hard → reset --keep, или stash && reset\n"
-        "  push --force → push --force-with-lease\n"
-        "  branch -D → merge/rebase + delete merged\n"
+        "  push --force (и --force-with-lease) → не нужен: правь fixup-коммитом\n"
+        "    в той же feature-ветке, squash-merge всё равно свернёт её историю\n"
+        "  branch -D → merge через PR, затем git push origin --delete <branch>\n"
         "  clean -fdx → проверить git status && targeted rm"
     )
 

@@ -23,6 +23,7 @@ from safety_common import (  # noqa: E402
     block,
     log,
     read_event,
+    strip_git_global_opts,
 )
 
 PATTERNS = [
@@ -43,7 +44,9 @@ def main() -> None:
     if not cmd:
         allow()
 
-    hit = any_match(cmd, PATTERNS)
+    # Как и в git-destructive-guard: глобальные опции (`git -C app commit …`)
+    # снимаются перед матчингом, пользователю показывается исходная команда.
+    hit = any_match(strip_git_global_opts(cmd), PATTERNS)
     if not hit:
         allow()
 

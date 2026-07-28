@@ -19,6 +19,7 @@ Bypass: CLAUDE_ALLOW_INJECTION=1.
 """
 from __future__ import annotations
 
+import os.path
 import re
 import sys
 from pathlib import Path
@@ -29,19 +30,68 @@ from safety_common import (  # noqa: E402
     bash_command,
     block,
     bypass,
+    db_destructive_hit,
     log,
     read_event,
 )
 
 # Well-known side-effect-free utilities safe inside $(...)
+# Опасен не факт подстановки, а destructive-глагол внутри неё — его ловят
+# DESTRUCTIVE_VERBS и db_destructive_hit, которые проверяются РАНЬШЕ этого списка.
 TRIVIAL_CMDS = {
     "pwd", "date", "whoami", "hostname", "id", "uname", "echo", "printf",
     "basename", "dirname", "realpath", "readlink",
     "cat", "head", "tail",  # reads; add only if they take trivial args
     "which", "command", "type",
-    "tr", "cut", "wc", "sort", "uniq",
+    "tr", "cut", "wc", "sort", "uniq", "grep", "rg", "ls",
     "git",  # git rev-parse etc is common and safe
     "node", "python", "python3",  # when running --version
+    "jq",
+    "mktemp",  # $(mktemp -d) — канон для scratch-каталога
+}
+
+# Пакетные менеджеры и toolchain целиком в TRIVIAL_CMDS класть нельзя: рутинный
+# `$(npm pkg get version)` и разрушительный `$(npm publish)` — один исполняемый
+# файл. Поэтому whitelist на уровне подкоманды: всё, чего здесь нет, остаётся
+# non-trivial и требует подтверждения. `sed`/`awk` не в списках вовсе — `sed -i`
+# правит файл на месте, `awk` умеет system().
+#
+# Двусловные записи («pkg get», «python find») нужны там, где подкоманда сама по
+# себе неоднородна: `npm pkg get` читает package.json, а `npm pkg set|delete` его
+# правит; `uv python find` ищет интерпретатор, `uv python install` ставит его.
+TRIVIAL_SUBCOMMANDS = {
+    "brew": {"--prefix", "--cellar", "--repository", "--version", "list", "info"},
+    "npm": {"pkg get", "view", "ls", "list", "root", "prefix", "bin", "--version", "-v"},
+    "pnpm": {"list", "ls", "root", "bin", "--version", "-v"},
+    "yarn": {"list", "info", "--version", "-v"},
+    "bun": {"pm ls", "--version", "-v", "--revision"},
+    # `uv tree` без --frozen/--locked резолвит проект и может переписать uv.lock;
+    # `uv python find X` при отсутствии интерпретатора скачивает и ставит его.
+    # Обе — правка состояния окружения, а не диагностика.
+    "uv": {"python list", "--version", "-V"},
+    "pip": {"show", "list", "--version"},
+    "pip3": {"show", "list", "--version"},
+}
+
+# Каталоги, из которых исполняемый считается «той самой системной утилитой».
+# Совпадение basename'а недостаточно: `$(./ls …)` и `$(/tmp/jq …)` — чужой код
+# под знакомым именем, он должен оставаться non-trivial.
+TRUSTED_BIN_DIRS = (
+    "/bin/", "/sbin/", "/usr/bin/", "/usr/sbin/", "/usr/local/bin/",
+    "/opt/homebrew/bin/", "/opt/local/bin/",
+)
+
+# Флаги, из-за которых «безобидная» утилита перестаёт быть таковой:
+#   rg --pre CMD          — спавнит CMD на каждый просматриваемый файл;
+#   jq --rawfile x .env   — втягивает содержимое файла в вывод (обход secret-guard);
+#   mktemp --tmpdir=DIR   — создаёт файл вне /tmp и вне проекта.
+EXEC_BEARING_FLAGS = {
+    "rg": re.compile(r"(?:^|\s)--(?:pre|hostname-bin)(?:\s|=)"),
+    # --rawfile втягивает файл в вывод; фильтр `env` / `$ENV` выгружает всё
+    # окружение процесса агента, где живут ключи. `.env` как поле JSON — не в
+    # счёт, поэтому перед `env` не должно быть точки.
+    "jq": re.compile(r"(?:^|\s)--(?:rawfile|slurpfile|argfile)(?:\s|=)|(?<![.\w])env\b|\$ENV\b"),
+    "mktemp": re.compile(r"(?:^|\s)(?:--tmpdir(?:=|\s)|-p(?:\s|=))"),
 }
 
 SUBST_REGEX = re.compile(r"\$\(([^()]*(?:\([^()]*\)[^()]*)*)\)")
@@ -51,12 +101,12 @@ BACKTICK_REGEX = re.compile(r"`([^`]+)`")
 # inside ⇒ safe to strip before substitution scanning (see find_substitutions).
 QUOTED_HEREDOC_REGEX = re.compile(r"<<-?\s*(['\"])(\w+)\1.*?\n[ \t]*\2\b", re.DOTALL)
 
+# Destructive SQL здесь не перечисляется — он проверяется через
+# db_destructive_hit() по клиенту БД (см. safety_common), иначе подстановка
+# `$(grep -c "DROP TABLE" app/migrations/001.sql)` считалась бы катастрофой.
 DESTRUCTIVE_VERBS = re.compile(
     r"\b("
-    r"dropdb|dropuser|drop\s+(table|database|schema)"
-    r"|truncate\s+table"
-    r"|delete\s+from\s+\w+(\s*;|\s*$|\s+where\s+(1\s*=\s*1|true))"  # DELETE no real WHERE
-    r"|rm\s+-[rf]+"
+    r"rm\s+-[rf]+"
     r"|mkfs\.|dd\s+if=|dd\s+of=/dev/"
     r"|kubectl\s+delete"
     r"|docker\s+(rm\s+-f|system\s+prune)"
@@ -80,9 +130,29 @@ def is_trivial(subst_body: str) -> bool:
     if re.match(r"^(cat|printf|echo)\s+<<", body) or re.match(r"^<<", body):
         return True
     # First word determines the utility
-    first = body.split(maxsplit=1)[0]
-    first = first.lstrip("\\")  # strip leading escape
-    if first not in TRIVIAL_CMDS:
+    tokens = body.split()
+    first = tokens[0].lstrip("\\")  # strip leading escape
+    if "/" in first:
+        # Путь к исполняемому: имя утилиты засчитываем только из системных
+        # каталогов (/opt/homebrew/bin/brew — да, ./ls и /tmp/jq — нет).
+        # normpath обязателен: лексический префикс проходил на traversal
+        # `/usr/bin/../../tmp/jq`, который ОС резолвит в /tmp/jq.
+        resolved = os.path.normpath(first)
+        if not resolved.startswith(TRUSTED_BIN_DIRS):
+            return False
+        first = resolved.rsplit("/", 1)[-1]
+    exec_flags = EXEC_BEARING_FLAGS.get(first)
+    if exec_flags and exec_flags.search(body):
+        return False
+    if first in TRIVIAL_SUBCOMMANDS:
+        # Пакетный менеджер: доверяем не файлу, а конкретной read-only подкоманде.
+        # Проверяем и двусловную форму («npm pkg get»), и однословную.
+        allowed = TRIVIAL_SUBCOMMANDS[first]
+        two = " ".join(tokens[1:3])
+        one = tokens[1] if len(tokens) > 1 else ""
+        if two not in allowed and one not in allowed:
+            return False
+    elif first not in TRIVIAL_CMDS:
         return False
     # Extra check: even trivial cmd with shell metacharacters in args is suspect.
     # But <<- and << are heredoc markers, not pipes/redirects - allow.
@@ -134,7 +204,7 @@ def main() -> None:
     destructive_hits: list[str] = []
     nontrivial_hits: list[str] = []
     for form, body in substitutions:
-        if DESTRUCTIVE_VERBS.search(body):
+        if DESTRUCTIVE_VERBS.search(body) or db_destructive_hit(body):
             destructive_hits.append(f"{form} -> {body[:80]}")
         elif not is_trivial(body):
             nontrivial_hits.append(f"{form} -> {body[:80]}")
