@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from safety_common import SECRET_PATTERNS, log, read_event  # noqa: E402
+from safety_common import SECRET_PATTERNS, read_event  # noqa: E402
 
 # (label, regex) pairs, ordered by specificity. Общий источник с safety_common:
 # что детектор ловит — ровно то же маскируется в аудит-логе.
@@ -88,11 +88,6 @@ def main() -> None:
 
     if not hits:
         sys.exit(0)
-
-    # Log each finding — только метка, без значения: аудит-лог не должен
-    # становиться вторым местом, где лежит утёкший ключ.
-    for label, _snippet in hits:
-        log("ALERT", "detect_api_key_leak", "found", label, f"{tool_name}: <redacted>")
 
     # Emit loud warning to stderr - user will see this
     lines = [

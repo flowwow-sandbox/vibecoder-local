@@ -35,7 +35,6 @@ from safety_common import (  # noqa: E402
     block,
     bypass,
     file_path,
-    log,
     read_event,
 )
 
@@ -292,10 +291,8 @@ def main() -> None:
     verb, target = violation
 
     if bypass("workdir", cmd_or_target, env_name="CLAUDE_ALLOW_WORKDIR"):
-        log("WARN", "block_workdir", "bypass", verb, target)
         allow()
 
-    log("BLOCK", "block_workdir", "deny", verb, target)
     block(
         f"Запись вне корня проекта заблокирована: {verb} -> {target}\n"
         f"Корень проекта: {root}\n"

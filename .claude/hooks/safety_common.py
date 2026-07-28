@@ -1,6 +1,6 @@
 """Shared safety hook utilities.
 
-Reads PreToolUse JSON from stdin, exposes helpers for logging and blocking.
+Reads PreToolUse JSON from stdin, exposes helpers for verdicts and parsing.
 Exit conventions:
   - exit 0 + empty stdout: allow (silent pass-through)
   - exit 0 + JSON {"decision": "block", "reason": "..."} on stdout: block
@@ -10,12 +10,10 @@ See docs: https://docs.anthropic.com/en/docs/claude-code/hooks
 """
 from __future__ import annotations
 
-import datetime as _dt
 import json
 import os
 import re
 import sys
-from pathlib import Path
 
 # Windows default stdout is cp1252 which chokes on Cyrillic in block reasons.
 # Reconfigure to utf-8 before any print. No-op on platforms that already use utf-8.
@@ -24,9 +22,6 @@ try:
     sys.stderr.reconfigure(encoding="utf-8")
 except (AttributeError, OSError):
     pass
-
-LOG_PATH = Path.home() / ".claude" / "logs" / "safety.log"
-LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
 def read_event() -> dict:
@@ -76,43 +71,6 @@ SECRET_PATTERNS: list[tuple[str, "re.Pattern[str]"]] = [
     ("Generic bearer token",
      re.compile(r"\b[Bb]earer\s+[A-Za-z0-9_\-\.=/+~]{40,}")),
 ]
-
-
-def redact_secrets(text: str) -> str:
-    """Заменить секретоподобные значения на метку вида `[OpenAI API key redacted]`.
-
-    Аудит-лог должен отвечать на вопрос «что произошло», а не хранить рабочие
-    ключи: файл лежит вне репо (`~/.claude/logs/safety.log`), не ротируется и
-    не защищён ничем, кроме прав на домашний каталог. Метка сохраняет
-    диагностическую ценность записи, не сохраняя сам секрет.
-    """
-    if not text:
-        return text
-    for label, pattern in SECRET_PATTERNS:
-        text = pattern.sub(f"[{label} redacted]", text)
-    return text
-
-
-def log(level: str, hook: str, verdict: str, pattern: str, target: str) -> None:
-    """Append an audit line. One JSONL record per event.
-
-    Через redact_secrets проходит КАЖДОЕ строковое поле, а не только `target`:
-    injection-guard кладёт в `pattern` тело подстановки, и токен из него осел бы
-    в логе в открытом виде. Редакция идёт до усечения.
-    """
-    try:
-        record = {
-            "ts": _dt.datetime.utcnow().isoformat(timespec="seconds") + "Z",
-            "level": level,
-            "hook": hook,
-            "verdict": verdict,
-            "pattern": redact_secrets(pattern)[:400],
-            "target": redact_secrets(target)[:400],
-        }
-        with LOG_PATH.open("a", encoding="utf-8") as fh:
-            fh.write(json.dumps(record, ensure_ascii=False) + "\n")
-    except OSError:
-        pass
 
 
 def block(reason: str) -> None:

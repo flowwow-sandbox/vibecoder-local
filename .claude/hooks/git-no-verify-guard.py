@@ -21,7 +21,6 @@ from safety_common import (  # noqa: E402
     any_match,
     bash_command,
     block,
-    log,
     read_event,
     strip_git_global_opts,
 )
@@ -50,7 +49,6 @@ def main() -> None:
     if not hit:
         allow()
 
-    log("BLOCK", "block_git_no_verify", "deny", hit, cmd)
     block(
         f"Использование `--no-verify` запрещено политикой пилота: /{hit}/.\n"
         "Pre-commit хуки (gitleaks, lint, tests) — часть Уровня 2 защиты.\n"

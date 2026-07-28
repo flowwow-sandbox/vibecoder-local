@@ -31,7 +31,6 @@ from safety_common import (  # noqa: E402
     block,
     bypass,
     db_destructive_hit,
-    log,
     read_event,
 )
 
@@ -214,13 +213,10 @@ def main() -> None:
 
     if bypass("injection", cmd):
         pattern = destructive_hits[0] if destructive_hits else nontrivial_hits[0]
-        log("WARN", "block_command_injection", "bypass", pattern, cmd)
         allow()
 
     # Destructive substitution = always block
     if destructive_hits:
-        log("BLOCK", "block_command_injection", "deny_destructive",
-            destructive_hits[0], cmd)
         block(
             "Destructive shell substitution detected inside command:\n"
             f"  {destructive_hits[0]}\n"
@@ -237,8 +233,6 @@ def main() -> None:
         )
 
     # Non-trivial but non-destructive = advisory block
-    log("BLOCK", "block_command_injection", "deny_nontrivial",
-        nontrivial_hits[0], cmd)
     block(
         f"Non-trivial shell substitution: {nontrivial_hits[0]}\n"
         "Подстановка с side effects. Подтверди что она намеренная.\n"

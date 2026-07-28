@@ -22,7 +22,6 @@ from safety_common import (  # noqa: E402
     bash_command,
     block,
     bypass,
-    log,
     read_event,
     strip_git_global_opts,
 )
@@ -69,10 +68,8 @@ def main() -> None:
         allow()
 
     if bypass("git-destructive", cmd, env_name="CLAUDE_ALLOW_GIT_DESTRUCTIVE"):
-        log("WARN", "block_git_destructive", "bypass", hit, cmd)
         allow()
 
-    log("BLOCK", "block_git_destructive", "deny", hit, cmd)
     block(
         f"Destructive git operation: /{hit}/.\n"
         "Это команды которые перетирают историю или теряют uncommitted работу.\n"

@@ -21,7 +21,6 @@ from safety_common import (  # noqa: E402
     block,
     bypass,
     db_destructive_hit,
-    log,
     read_event,
 )
 
@@ -76,10 +75,8 @@ def main() -> None:
         allow()
 
     if bypass("destructive", cmd):
-        log("WARN", "block_destructive", "bypass", hit, cmd)
         allow()
 
-    log("BLOCK", "block_destructive", "deny", hit, cmd)
     block(
         "Destructive pattern detected: "
         f"/{hit}/. Этот hook блокирует катастрофические операции.\n"

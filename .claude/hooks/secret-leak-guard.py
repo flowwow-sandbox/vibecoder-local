@@ -19,7 +19,6 @@ from safety_common import (  # noqa: E402
     block,
     bypass,
     file_path,
-    log,
     read_event,
 )
 
@@ -131,10 +130,8 @@ def main() -> None:
         allow()
 
     if bypass("secrets", target):
-        log("WARN", "block_secrets", "bypass", hit, target)
         allow()
 
-    log("BLOCK", "block_secrets", "deny", hit, target)
     block(
         f"Secret file access blocked: {hit!r}.\n"
         "Причина: секреты (.env, ключи, ~/.ssh/id_*, ~/.secrets/*) не читать без явной\n"
