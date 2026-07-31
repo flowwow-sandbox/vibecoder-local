@@ -20,6 +20,9 @@ help:
 	@echo "      No Docker required. Usage: make preview or SANDBOX_SLUG=my-slug make preview."
 	@echo "  make wt-new SLUG=<feature-slug>"
 	@echo "      Create a git worktree at $(WT_DIR)/<slug>/ with branch feature/<slug>."
+	@echo "      Before creating it, syncs main with origin (git fetch + fast-forward) and"
+	@echo "      branches from main, so the feature never starts on a stale base. Add"
+	@echo "      NO_FETCH=1 to skip the sync when offline."
 	@echo "      Slug must match ^[a-z0-9][a-z0-9-]*$$ (lowercase letters, digits, dashes;"
 	@echo "      must start with letter or digit)."
 	@echo "      Must be run from the main worktree ($(MAIN_TOPLEVEL))."
@@ -103,8 +106,29 @@ wt-new:
 	  echo "Error: $(WT_DIR)/$(SLUG) already exists."; \
 	  exit 1; \
 	fi
+	@if [ "$(NO_FETCH)" = "1" ]; then \
+	  echo "⚠️  NO_FETCH=1 — синхронизация с origin пропущена, ветка пойдёт от локального main."; \
+	else \
+	  if ! git fetch origin main; then \
+	    echo "Error: git fetch origin main упал — нет сети или доступа к origin."; \
+	    echo "  Офлайн-обход: make wt-new SLUG=$(SLUG) NO_FETCH=1 (фича пойдёт от локального main)."; \
+	    exit 1; \
+	  fi; \
+	  cur=$$(git symbolic-ref --quiet --short HEAD || echo ''); \
+	  if [ "$$cur" = "main" ]; then \
+	    ok=0; git merge --ff-only origin/main && ok=1; \
+	  else \
+	    ok=0; git fetch origin main:main && ok=1; \
+	  fi; \
+	  if [ "$$ok" != "1" ]; then \
+	    echo "Error: локальный main не сматывается к origin/main (fast-forward невозможен)."; \
+	    echo "  Значит в main есть коммиты, которых нет в origin, — а прямой push в main запрещён."; \
+	    echo "  Посмотри их (git log origin/main..main), перенеси в feature-ветку и повтори."; \
+	    exit 1; \
+	  fi; \
+	fi
 	@mkdir -p '$(WT_DIR)'
-	@git worktree add -b 'feature/$(SLUG)' '$(WT_DIR)/$(SLUG)'
+	@git worktree add -b 'feature/$(SLUG)' '$(WT_DIR)/$(SLUG)' main
 	@printf '\nWorktree created: %s/%s\nBranch: feature/%s\nNext: cd %s/%s\n' \
 	  '$(WT_DIR)' '$(SLUG)' '$(SLUG)' '$(WT_DIR)' '$(SLUG)'
 
