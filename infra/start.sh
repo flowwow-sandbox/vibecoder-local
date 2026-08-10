@@ -141,6 +141,12 @@ HOOK_EOF
   echo "✓ Установлен pre-commit hook (gitleaks)"
 }
 
+# Форма имени GitHub-репо: буквы/цифры/точка/дефис/подчёркивание. Тело HTTP-ошибки
+# (фигурные скобки, кавычки, двоеточия, пробелы) под неё не подходит.
+is_repo_name() {
+  [[ "$1" =~ ^[A-Za-z0-9._-]+$ ]]
+}
+
 # Проверяет, что имя GitHub-репо совпадает с SANDBOX_SLUG из .env.
 # Если SANDBOX_SLUG не задан или gh repo view не отвечает — печатает warning и
 # возвращает 0 (не блокер первого запуска start.sh до создания репо).
@@ -157,12 +163,22 @@ check_slug() {
     return 0
   fi
 
-  local actual_repo_name
-  actual_repo_name=$(gh repo view --json name -q .name 2>/dev/null || echo "")
+  # `gh repo view -q` на HTTP-ошибке НЕ применяет фильтр: он копирует СЫРОЕ тело ответа
+  # в stdout и выходит ≠0, а `2>/dev/null` глушит лишь stderr. Поэтому непустой ответ ещё
+  # не значит «это имя репо» — без проверки формы пилоту предлагалось переименовать
+  # репозиторий в JSON (`gh repo rename {"message":"Requires authentication",…}`).
+  local actual_repo_name rc=0
+  actual_repo_name=$(gh repo view --json name -q .name 2>/dev/null) || rc=$?
 
-  if [[ -z "$actual_repo_name" ]]; then
-    echo "⚠️  Не удалось получить имя репо через gh repo view (репо ещё не создан?)."
-    echo "   Проверка repo name = slug пропущена — запусти ./infra/start.sh снова после первого push'а."
+  if [[ "$rc" -ne 0 ]] || ! is_repo_name "$actual_repo_name"; then
+    if [[ -z "$actual_repo_name" ]]; then
+      echo "⚠️  Не удалось получить имя репо через gh repo view (репо ещё не создан?)."
+      echo "   Проверка repo name = slug пропущена — запусти ./infra/start.sh снова после первого push'а."
+    else
+      echo "⚠️  GitHub ответил на запрос имени репо неожиданно — проверка repo name = slug пропущена."
+      echo "   Обычно это транзиентный сбой gh: запусти ./infra/start.sh ещё раз, скрипт идемпотентен."
+      echo "   Если повторяется — проверь gh auth status."
+    fi
     return 0
   fi
 
