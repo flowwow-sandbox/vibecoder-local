@@ -65,6 +65,7 @@
 |---|---|
 | Верстаю экран или страницу | дизайн-контракт по поверхности (ниже) |
 | Пишу прикладной код | `docs/contracts/dev-workflow.md` → `docs/contracts/app-security.md` → `docs/contracts/safety-rules.md` |
+| Отдаю статику: картинки, шрифты, бандлы сборки | `docs/contracts/static-caching.md` |
 | Оунер попросил операцию | runbook по событию |
 
 ### Дизайн: какую поверхность делаешь
@@ -85,6 +86,7 @@
 | Как делать фичу: feature-ветка → L1/L2 → review → PR → merge | `docs/contracts/dev-workflow.md` |
 | Безопасность + allowlist технологий | `docs/contracts/safety-rules.md` |
 | Пишешь app-код: как не написать уязвимость (XSS, SQLi, валидация, authz, секреты в бандле) | `docs/contracts/app-security.md` |
+| Отдаю статику: заголовки кэша и сжатие в своём HTTP-слое | `docs/contracts/static-caching.md` |
 | Это публичный или внутренний пилот? Какие защиты обязательны? | `docs/contracts/audience-and-exposure.md` |
 | Чек-лист методологии (brainstorm → plan → tests → code → review) | `docs/contracts/methodology.md` |
 
