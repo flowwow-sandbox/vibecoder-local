@@ -109,12 +109,24 @@ setup_env() {
 # Тело hook'а: set -euo pipefail + проверка существования gitleaks (exit 127 vs.
 # реальная находка секрета — раньше hook путал эти случаи).
 setup_hook() {
-  local repo_root
-  if ! repo_root=$(git rev-parse --show-toplevel 2>/dev/null); then
+  local hooks_dir
+  if ! git rev-parse --show-toplevel >/dev/null 2>&1; then
     echo "⚠️  .git не найден — пропускаю установку pre-commit hook"
     return 0
   fi
-  local hook_path="$repo_root/.git/hooks/pre-commit"
+  # git rev-parse --git-path hooks, а НЕ наивная склейка "$repo_root/.git/hooks":
+  # в git-worktree `.git` — ФАЙЛ (gitdir: <путь к .git/worktrees/<name>>), не
+  # каталог, и склейка даёт "…/.git/hooks/pre-commit: Not a directory" под
+  # set -euo pipefail — сырую ошибку bash вместо штатного сообщения. Каждый
+  # свежий feature-worktree пилота (AGENTS.md, инвариант №6) — именно этот
+  # случай. --git-path резолвит РЕАЛЬНЫЙ (общий для всех worktree одного репо)
+  # каталог hooks корректно в обоих случаях.
+  hooks_dir="$(git rev-parse --git-path hooks 2>/dev/null)" || hooks_dir=""
+  if [[ -z "$hooks_dir" || ! -d "$hooks_dir" ]]; then
+    echo "⚠️  Не нашёл каталог git hooks — пропускаю установку pre-commit hook"
+    return 0
+  fi
+  local hook_path="$hooks_dir/pre-commit"
   if [[ -f "$hook_path" ]]; then
     echo "✓ pre-commit hook уже существует — оставляю как есть"
     return 0
