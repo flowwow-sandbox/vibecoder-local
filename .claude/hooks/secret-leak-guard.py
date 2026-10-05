@@ -7,6 +7,7 @@ Bypass: CLAUDE_ALLOW_SECRETS=1.
 """
 from __future__ import annotations
 
+import ast
 import re
 import sys
 from pathlib import Path
@@ -60,6 +61,130 @@ BASH_READ_VERBS = re.compile(
     re.IGNORECASE,
 )
 
+# Консервативный поднабор shell: литеральные слова/кавычки и разделители.
+# Подстановки, escape-последовательности, heredoc и склейка кавычек не входят:
+# если разбор неоднозначен, оставляем исходный текст для прежнего детектора.
+_SHELL_TOKEN_RE = re.compile(
+    r"[ \t]+|(?P<separator>\n|&&|\|\||[;|&])|(?P<comment>#[^\n]*)|"
+    r"(?P<word>'[^']*'|\"[^\"\\$`]*\"|[\w./:=,@%+-]+)"
+)
+
+# Known uv run option arities. Unknown options and modes that reinterpret the
+# command (--module/--script) do not qualify for the Python-code exception.
+# --python/-p can select an arbitrary executable, so they are excluded too.
+_UV_RUN_FLAGS = frozenset(
+    ("--active --all-extras --all-groups --all-packages --no-dev --only-dev "
+     "--no-default-groups --no-editable --exact --no-env-file --isolated "
+     "--no-sync --locked --frozen --no-project --no-index --no-sources "
+     "--reinstall --compile-bytecode --no-build-isolation --no-build --no-binary "
+     "--no-cache -n --refresh --upgrade -U --managed-python --no-managed-python "
+     "--no-python-downloads --quiet -q --verbose -v --system-certs --offline "
+     "--no-progress --no-config").split()
+)
+_UV_RUN_VALUE_OPTIONS = frozenset(
+    ("--env-file --extra --no-extra --group --no-group --only-group "
+     "--no-editable-package --with -w --with-editable --with-requirements "
+     "--package --python-platform --index --default-index --index-url -i "
+     "--extra-index-url --find-links -f --index-strategy --keyring-provider "
+     "--upgrade-package -P --upgrade-group --resolution --prerelease "
+     "--fork-strategy --exclude-newer --exclude-newer-package --no-sources-package "
+     "--reinstall-package --link-mode --config-setting -C --config-settings-package "
+     "--no-build-isolation-package --no-build-package --no-binary-package "
+     "--cache-dir --refresh-package --color --allow-insecure-host "
+     "--directory --project --config-file").split()
+)
+
+
+def mask_python_imports(code: str) -> str:
+    """Mask AST imports only; strings containing shell commands stay visible."""
+    try:
+        tree = ast.parse(code)
+    except (SyntaxError, ValueError, RecursionError):
+        return code
+    # AST columns are UTF-8 byte offsets, including for non-ASCII source.
+    raw = code.encode("utf-8")
+    line_starts = [0]
+    for line in raw.splitlines(keepends=True):
+        line_starts.append(line_starts[-1] + len(line))
+    spans = []
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            start = line_starts[node.lineno - 1] + node.col_offset
+            end = line_starts[node.end_lineno - 1] + node.end_col_offset
+            spans.append((start, end))
+    for start, end in sorted(spans, reverse=True):
+        raw = raw[:start] + b" " * (end - start) + raw[end:]
+    return raw.decode("utf-8")
+
+
+def python_code_argument(words: list[re.Match[str]]) -> re.Match[str] | None:
+    """Recognize unqualified python -c or uv run [known options] python -c."""
+    values = [m.group()[1:-1] if m.group().startswith(("'", '"')) else m.group() for m in words]
+    if not values:
+        return None
+    i = 0
+    if values[0] == "uv":
+        if len(values) < 2 or values[1] != "run":
+            return None
+        i = 2
+        while i < len(values):
+            option, equals, value = values[i].partition("=")
+            if values[i] in _UV_RUN_FLAGS or re.fullmatch(r"-[qv]+", values[i]):
+                i += 1
+            elif option in _UV_RUN_VALUE_OPTIONS:
+                if equals:
+                    if not value:
+                        return None
+                    i += 1
+                elif i + 1 < len(values) and not values[i + 1].startswith("-"):
+                    i += 2
+                else:
+                    return None
+            else:
+                break
+        if i < len(values) and values[i] == "--":
+            i += 1
+    if (
+        i + 2 < len(values)
+        and re.fullmatch(r"python(?:3(?:\.\d+)*)?", values[i])
+        and values[i + 1] == "-c"
+        and words[i + 2].group().startswith(("'", '"'))
+    ):
+        return words[i + 2]
+    return None
+
+
+def bash_verb_text(cmd: str) -> str:
+    """Exclude imports only inside a literal code argument of a Python command."""
+    segments: list[list[re.Match[str]]] = [[]]
+    pos = 0
+    last_word_end = None
+    while pos < len(cmd):
+        m = _SHELL_TOKEN_RE.match(cmd, pos)
+        if m is None:
+            return cmd
+        if m.group("comment"):
+            if last_word_end == m.start():
+                return cmd  # A hash inside a word is not a shell comment.
+        elif m.group("separator"):
+            segments.append([])
+            last_word_end = None
+        elif m.group("word"):
+            if last_word_end == m.start():
+                return cmd  # Adjacent quoted/unquoted pieces form one shell word.
+            segments[-1].append(m)
+            last_word_end = m.end()
+        pos = m.end()
+    replacements = []
+    for words in segments:
+        arg = python_code_argument(words)
+        if arg is not None:
+            code = arg.group()[1:-1]
+            replacements.append((arg.start() + 1, arg.end() - 1, mask_python_imports(code)))
+    for start, end, replacement in reversed(replacements):
+        cmd = cmd[:start] + replacement + cmd[end:]
+    return cmd
+
 
 def path_is_secret(path: str) -> str | None:
     if not path:
@@ -84,6 +209,8 @@ def bash_touches_secret(cmd: str) -> str | None:
         return None
     # Split on common separators to test each token that looks path-ish.
     tokens = re.split(r"[\s;&|<>()`]+", cmd)
+    # Python-импорты исключаем только из проверенного аргумента python -c.
+    verb_text = bash_verb_text(cmd)
     for tok in tokens:
         tok = tok.strip("\"'")
         if not tok or tok.startswith("-"):
@@ -91,7 +218,7 @@ def bash_touches_secret(cmd: str) -> str | None:
         hit = path_is_secret(tok)
         if hit:
             # Only block if the command seems to read/print, not edit via protected editor
-            if BASH_READ_VERBS.search(cmd) or "echo" in cmd.lower() or "printenv" in cmd.lower():
+            if BASH_READ_VERBS.search(verb_text) or "echo" in cmd.lower() or "printenv" in cmd.lower():
                 return hit
             # Reading via redirection like `< .env` also leaks
             if re.search(r"<\s*\S*" + re.escape(tok), cmd):
