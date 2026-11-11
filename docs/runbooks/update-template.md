@@ -2,7 +2,7 @@
 
 **Триггер от оунера** (фраза, активирующая этот runbook): «обнови шаблон проекта»
 
-**Предусловие:** онбординг пройден (`gh auth status` зелёный), working tree чистый — незакоммиченные правки сначала закоммить в их feature-ветку (или явно отложить с оунером).
+**Предусловие:** онбординг пройден (auth своей forge пройден — `gh auth status --active --hostname github.com` на GitHub, `gt auth status --json --verify --host https://git.flowwow.co` на Gitea; критерии полей — `docs/contracts/forge-platform.md`), working tree чистый — незакоммиченные правки сначала закоммить в их feature-ветку (или явно отложить с оунером).
 
 **Постусловие:** изменения template'а с момента последней синхронизации перенесены в проект через PR по стандартному dev-workflow; в корне лежит обновлённый `.template-version`; приложение локально поднимается.
 
@@ -20,7 +20,20 @@
    git fetch template
    ```
 
-   Sanity-check происхождения (не обязателен, но дёшев): `tpl=$(gh api "repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)" --jq '.template_repository.full_name') || tpl=""` — если `tpl` непуст и НЕ равен `flowwow-sandbox/vibecoder-local`, остановись и спроси оунера: репо создан из другого шаблона, этот runbook к нему не применим.
+   **Upstream шаблона — только источник чтения, и это отдельный от origin адрес:** remote `template` не определяет платформу проекта, а его GitHub-адрес не даёт права передавать туда Gitea-credentials. Origin проекта и его forge после этих шагов не меняются.
+
+   Sanity-check происхождения (не обязателен, но дёшев) — **только для GitHub-origin** и только с явной адресацией своего repo; на Gitea-проекте шаг пропускается целиком (`gh` на этом пути не вызывается):
+
+   ```bash
+   # Платформа проекта — по эффективному origin, а не по remote template.
+   source infra/_forge.sh && forge_detect .
+   if [ "$FORGE_PROVIDER" = github ]; then
+     tpl=$(gh api "repos/$FORGE_REPO" --hostname github.com \
+             --jq '.template_repository.full_name') || tpl=""
+   fi
+   ```
+
+   Если `tpl` непуст и НЕ равен `flowwow-sandbox/vibecoder-local`, остановись и спроси оунера: репо создан из другого шаблона, этот runbook к нему не применим. Пустой `tpl` (или Gitea-origin) — не приговор, просто проверки нет.
 
 3. **Определи базу сравнения** — коммит template'а, соответствующий текущей копии проекта:
 
@@ -60,7 +73,7 @@
    git add .template-version
    ```
 
-8. **Проведи через стандартный flow.** Как обычную фичу (см. `docs/contracts/dev-workflow.md` §2): commit → L1 (lint + tests + typecheck проекта) → cross-review → L2 (local preview, «ок» оунера) → push → PR → squash-merge.
+8. **Проведи через стандартный flow.** Как обычную фичу (см. `docs/contracts/dev-workflow.md` §2): commit → L1 (lint + tests + typecheck проекта) → cross-review → L2 (local preview, «ок» оунера) → push → PR и merge командами своей forge (`docs/contracts/forge-platform.md`: явная адресация repo из origin).
 
 9. **После merge — проверь локальный запуск.** Подними приложение командой его стека (`bun dev`, `npm run dev`, `uvicorn` и т.п.) — оунер видит его локально. `infra/start.sh` приложение не запускает (он только готовит окружение). Если не поднимается — runbook `troubleshooting.md`.
 

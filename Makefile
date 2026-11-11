@@ -14,7 +14,10 @@ WT_DIR := $(MAIN_TOPLEVEL)/.worktrees
 help:
 	@echo "Available targets:"
 	@echo "  make setup"
-	@echo "      Установить нужные утилиты (gh, gitleaks, jq, gettext) через Homebrew. macOS."
+	@echo "      Установить нужные утилиты через Homebrew. macOS."
+	@echo "      Forge-CLI выбирается по origin репозитория: gh для GitHub, gt для Gitea"
+	@echo "      (gt Homebrew не ставит — ручная установка по официальной инструкции"
+	@echo "      https://gitea.com/gitea/cli/releases). Общие утилиты: gitleaks, jq, gettext."
 	@echo "  make preview"
 	@echo "      Open a local browser preview of app/index.html.tpl with SANDBOX_SLUG substituted."
 	@echo "      No Docker required. Usage: make preview or SANDBOX_SLUG=my-slug make preview."
@@ -28,24 +31,26 @@ help:
 	@echo "      Must be run from the main worktree ($(MAIN_TOPLEVEL))."
 	@echo "  make wt-prune"
 	@echo "      Remove worktrees whose PR was merged: origin branch gone AND a merged"
-	@echo "      PR whose head SHA matches the branch tip (confirmed via gh). Clean ones"
-	@echo "      are removed and their local branch deleted; worktrees with uncommitted"
-	@echo "      changes — or where the merge can't be confirmed — are skipped with a warning."
+	@echo "      PR whose head SHA matches the branch tip (confirmed via the forge CLI of"
+	@echo "      origin: gh on GitHub, gt on Gitea). Clean ones are removed and their"
+	@echo "      local branch deleted; worktrees with uncommitted changes — or where the"
+	@echo "      merge can't be confirmed — are skipped with a warning."
 	@echo "      Must be run from the main worktree ($(MAIN_TOPLEVEL))."
 
 setup:
 	@os="$$(uname -s)"; \
 	if [ "$$os" != "Darwin" ]; then \
 	  echo "make setup ставит утилиты автоматически только на macOS (через Homebrew)."; \
-	  echo "На твоей ОС поставь вручную: gh, gitleaks, jq, gettext."; \
+	  echo "На твоей ОС поставь вручную. Forge-CLI — по origin репозитория:"; \
+	  echo "  gh для GitHub; gt для Gitea — вручную по официальной инструкции"; \
+	  echo "  (https://gitea.com/gitea/cli/releases — проверенных пакетов нет)."; \
+	  echo "  Общие утилиты: gitleaks, jq, gettext (envsubst)."; \
 	  echo "  Debian/Ubuntu:"; \
 	  echo "    jq, gettext-base: sudo apt update && sudo apt install -y jq gettext-base"; \
-	  echo "    gh, gitleaks: сначала попробуй apt (sudo apt install -y gh gitleaks — в свежих"; \
-	  echo "        Ubuntu они есть в universe); если пакет не нашёлся:"; \
-	  echo "        gh — из официального репо cli.github.com"; \
-	  echo "        (https://github.com/cli/cli/blob/trunk/docs/install_linux.md),"; \
-	  echo "        gitleaks — release-бинарь с https://github.com/gitleaks/gitleaks/releases"; \
-	  echo "  Другое: https://cli.github.com  и  https://github.com/gitleaks/gitleaks"; \
+	  echo "    gitleaks: release-бинарь с https://github.com/gitleaks/gitleaks/releases"; \
+	  echo "    gh (если origin на github.com): сначала попробуй apt (sudo apt install -y gh —"; \
+	  echo "        в свежих Ubuntu есть в universe); если пакет не нашёлся —"; \
+	  echo "        https://github.com/cli/cli/blob/trunk/docs/install_linux.md"; \
 	  echo "Потом запусти ./infra/start.sh — он проверит, что всё на месте."; \
 	  exit 0; \
 	fi; \
@@ -53,18 +58,40 @@ setup:
 	  echo "❌ Нужен Homebrew. Поставь по инструкции с https://brew.sh, потом снова: make setup"; \
 	  exit 1; \
 	fi; \
+	forge_cli=""; \
+	if [ -f ./infra/_forge.sh ]; then \
+	  forge_cli=$$(bash -c 'source ./infra/_forge.sh && forge_detect . && printf %s "$$FORGE_CLI"' 2>/dev/null || true); \
+	fi; \
 	missing=""; \
-	command -v gh       >/dev/null 2>&1 || missing="$$missing gh"; \
+	case "$$forge_cli" in \
+	  gt) \
+	    if command -v gt >/dev/null 2>&1; then \
+	      echo "✓ gt на месте (Gitea)."; \
+	    else \
+	      echo "❌ Для этого репозитория (Gitea) нужен gt CLI — поставь вручную по официальной инструкции:"; \
+	      echo "   https://gitea.com/gitea/cli/releases"; \
+	      echo "   (проверенных brew/apt-пакетов нет — автоматическая установка не выполняется)."; \
+	    fi ;; \
+	  gh) \
+	    command -v gh >/dev/null 2>&1 || missing="$$missing gh" ;; \
+	  *) \
+	    echo "❌ Не удалось определить платформу по origin (ожидались github.com или git.flowwow.co)."; \
+	    echo "   Поставь CLI вручную: gh для GitHub (brew install gh); gt для Gitea —"; \
+	    echo "   https://gitea.com/gitea/cli/releases"; \
+	    ;; \
+	esac; \
 	command -v gitleaks >/dev/null 2>&1 || missing="$$missing gitleaks"; \
 	command -v jq       >/dev/null 2>&1 || missing="$$missing jq"; \
 	command -v envsubst >/dev/null 2>&1 || missing="$$missing gettext"; \
-	if [ -z "$$missing" ]; then \
-	  echo "✓ Всё на месте: gh, gitleaks, jq, envsubst."; \
-	else \
+	if [ -n "$$missing" ]; then \
 	  echo "→ Ставлю через brew:$$missing"; \
 	  brew install$$missing || { echo "❌ brew install не удался — поставь вручную:$$missing"; exit 1; }; \
 	  case "$$missing" in *gettext*) brew link --force gettext >/dev/null 2>&1 || true ;; esac; \
+	fi; \
+	if [ "$$forge_cli" = "gh" ]; then \
 	  echo "✓ Готово."; \
+	else \
+	  echo "✓ Общие утилиты на месте. Forge-CLI: см. сообщение выше (gh — brew, gt — вручную)."; \
 	fi
 
 preview:
@@ -143,35 +170,4 @@ wt-prune:
 	  echo "  Current: $(CURDIR)"; \
 	  exit 1; \
 	fi
-	@git fetch --prune origin 2>/dev/null || \
-	  echo "⚠️  git fetch failed — gone-статус может быть устаревшим, продолжаю с локальными данными."
-	@rc=0; tmp=$$(mktemp); git worktree list --porcelain > "$$tmp"; path=; \
-	while IFS= read -r line; do \
-	  case "$$line" in \
-	    "worktree "*) path=$${line#worktree } ;; \
-	    "branch refs/heads/"*) \
-	      branch=$${line#branch refs/heads/}; \
-	      if [ "$$path" != "$(MAIN_TOPLEVEL)" ]; then \
-	        track=$$(git for-each-ref --format='%(upstream:track)' "refs/heads/$$branch"); \
-	        if [ "$$track" = "[gone]" ]; then \
-	          if [ -n "$$(git -C "$$path" status --porcelain)" ]; then \
-	            echo "⚠️  skip (uncommitted changes): $$path  [$$branch]"; \
-	          elif ! command -v gh >/dev/null 2>&1; then \
-	            echo "⚠️  skip (gh не найден, не подтвердить merge — удали вручную, если уверен): $$path  [$$branch]"; \
-	          else \
-	            tip=$$(git rev-parse "refs/heads/$$branch" 2>/dev/null); \
-	            if [ -n "$$tip" ] && gh pr list --head "$$branch" --state merged --json headRefOid --jq '.[].headRefOid' 2>/dev/null | grep -qx "$$tip"; then \
-	              echo "🗑️  removing: $$path  [$$branch] (PR merged, origin branch gone)"; \
-	              if git worktree remove "$$path"; then git branch -D "$$branch" || rc=1; else rc=1; fi; \
-	            else \
-	              echo "⚠️  skip (origin-ветка удалена, но merged PR для текущего tip не найден — удали вручную, если уверен): $$path  [$$branch]"; \
-	            fi; \
-	          fi; \
-	        fi; \
-	      fi; \
-	      path= ;; \
-	  esac; \
-	done < "$$tmp"; \
-	rm -f "$$tmp"; \
-	echo "wt-prune: done."; \
-	exit $$rc
+	@bash infra/_wt_prune.sh "$(MAIN_TOPLEVEL)"

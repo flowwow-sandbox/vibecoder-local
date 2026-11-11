@@ -78,15 +78,21 @@ L2 не автоматизируется. Без явного «ок» от оу
 
 ### 2.7 PR + merge
 
-Push feature-ветки и открой PR:
+Команды PR-цикла — в секции своей forge [`forge-platform.md`](forge-platform.md);
+здесь только форма GitHub (`gh`). Платформа проекта одна и определяется по
+origin, флаги одного CLI на другой не переносятся.
+
+Push feature-ветки и открой PR (OWNER/REPO — из origin, адресация явная; без
+`-R` gh берёт repo из своего конфига или upstream и действует на чужом проекте):
 
 ```bash
 git push -u origin feature/<slug>
-gh pr create --fill                        # или с явным title/body
-gh pr merge --squash                       # squash-merge на GitHub (без локальной чистки)
+gh pr create --fill -R github.com/OWNER/REPO
+gh pr merge N --squash -R github.com/OWNER/REPO
 # origin-ветку удаляй ТОЛЬКО когда PR реально MERGED: при branch-protection/merge-queue
 # merge откладывается, и преждевременное удаление снесёт ветку, которая ещё нужна GitHub'у.
-[ "$(gh pr view --json state -q .state)" = "MERGED" ] && git push origin --delete feature/<slug>
+# N — номер именно созданного PR (его печатает `gh pr create`).
+[ "$(gh pr view N --json state -q .state -R github.com/OWNER/REPO)" = "MERGED" ] && git push origin --delete feature/<slug>
 ```
 
 `--squash` сворачивает все коммиты feature-ветки в один коммит main (чистая история).
@@ -99,7 +105,7 @@ gh pr merge --squash                       # squash-merge на GitHub (без л
 
 ## 3. Rollback
 
-- **Код проблемный (default):** revert обычным worktree+PR-flow (§2.2/§2.7): `make wt-new SLUG=revert-<slug>`, в нём `git revert <hash>` → `git push -u origin feature/revert-<slug>` → `gh pr create --fill` → merge как в §2.7 (`gh pr merge --squash` + `git push origin --delete feature/revert-<slug>`) → из основного worktree `git pull --ff-only` + `make wt-prune`. Cross-review для revert'а опционален — diff тривиальный.
+- **Код проблемный (default):** revert обычным worktree+PR-flow (§2.2/§2.7): `make wt-new SLUG=revert-<slug>`, в нём `git revert <hash>` → `git push -u origin feature/revert-<slug>` → PR и merge командами своей forge (`./forge-platform.md`) + `git push origin --delete feature/revert-<slug>` → из основного worktree `git pull --ff-only` + `make wt-prune`. Cross-review для revert'а опционален — diff тривиальный.
 - **Emergency-revert (нужно немедленно):** допускается прямой `git revert <hash> && git push origin main` **только** с явного «ок» оунера в моменте. Зафиксируй в чате с оунером, что это override default'а.
 
 ## 4. Когда вызывать субагентов (через obra/superpowers)
@@ -118,7 +124,7 @@ gh pr merge --squash                       # squash-merge на GitHub (без л
 - **Branch model:** `main` всегда зелёный. Разработка в feature-ветке `feature/<slug>` (рекомендуется через worktree, `make wt-new SLUG=<slug>`) → commit (§2.4) → cross-review субагентом (§2.5) → L2 (§2.6) → PR → squash-merge в main. Прямой `git push origin main` запрещён политикой (см. `./safety-rules.md` §3). Исключение — emergency-revert (см. §3).
 - **Commit-сообщения:** imperative mood (`add slug validation`, не `added`), ≤ 72 символа в первой строке. Свободный текст; conventional commits (`feat:`/`fix:`) НЕ требуются.
 - **Атомарность:** один логический change = один коммит в feature-ветке. Если коммит > 300 строк изменений — скорее всего его надо разделить. При squash-merge все коммиты feature-ветки сворачиваются в один на main — заголовок PR станет заголовком squash-коммита, поэтому формулируй его осмысленно.
-- **PR-merge (из worktree):** `gh pr merge --squash` + `git push origin --delete feature/<slug>` — НЕ `--delete-branch` (из worktree его локальная чистка упрётся в `main`, занятый основным worktree; см. §2.7). Затем из основного worktree: `git pull --ff-only` + `make wt-prune`.
+- **PR-merge (из worktree):** команды merge своей forge (см. `./forge-platform.md`) + `git push origin --delete feature/<slug>` — НЕ `--delete-branch` (из worktree его локальная чистка упрётся в `main`, занятый основным worktree; см. §2.7). Затем из основного worktree: `git pull --ff-only` + `make wt-prune`.
 - **После merge:** из основного worktree `git pull --ff-only` синхронизирует локальный main (из feature-worktree `git checkout main` упрётся в занятую ветку — см. §2.7).
 
 ### 5.2 Security

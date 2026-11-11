@@ -116,7 +116,7 @@ exclude-newer = "7 days"
 Никогда:
 - `git commit --no-verify` — наш custom git-no-verify-guard в `.claude/hooks/` заблокирует (wiring в `.claude/settings.json` для Claude Code и в `.codex/hooks.json` для Codex).
 - `git push --force` / `git push --force-with-lease` — на main вообще запрещено; на feature-ветке после открытия PR — тоже (ломает history для cross-review).
-- Прямой `git push origin main` — запрещён, всё идёт через PR (merge: `gh pr merge --squash` + `git push origin --delete feature/<slug>`, НЕ `--delete-branch` — из worktree упрётся; см. `./dev-workflow.md` §2.7). Исключение — emergency-revert по явному «ок» оунера (см. `./dev-workflow.md` §3).
+- Прямой `git push origin main` — запрещён, всё идёт через PR (merge командами своей forge — `./forge-platform.md`, затем `git push origin --delete feature/<slug>`, НЕ `--delete-branch` — из worktree упрётся; см. `./dev-workflow.md` §2.7). Исключение — emergency-revert по явному «ок» оунера (см. `./dev-workflow.md` §3).
 - `git config user.*` без явного запроса оунера.
 - `git reset --hard` после коммитов, которые видел оунер (потеря истории).
 - `gh auth logout`.
@@ -169,7 +169,7 @@ exclude-newer = "7 days"
 | `gh repo delete` | ⚠️ Только по явному запросу оунера | — |
 | `gh auth logout` | ❌ Запрещено политикой | — (текстовое правило) |
 
-¹ `make wt-prune` удаляет локальную ветку сам — но только у worktree, чья origin-ветка уже удалена и чей tip подтверждён merged-PR через `gh`. Хук на это не срабатывает (команда выполняется внутри Makefile, а не в Bash-вызове агента), и это осознанно: удаляется ветка, уже влитая в main. Ручной `git branch -D` остаётся заблокированным.
+¹ `make wt-prune` удаляет локальную ветку сам — но только у worktree, чья origin-ветка уже удалена и чей tip подтверждён merged-PR через CLI своей forge (`gh` / `gt`). Хук на это не срабатывает (команда выполняется внутри Makefile, а не в Bash-вызове агента), и это осознанно: удаляется ветка, уже влитая в main. Ручной `git branch -D` остаётся заблокированным.
 
 **Recovery scenarios** (закоммитил `.env`, откат коммита, `rebase -i` ситуация) — `docs/runbooks/troubleshooting.md`, секции «Git / gitleaks» и «Git / откат».
 
@@ -180,6 +180,7 @@ exclude-newer = "7 days"
 - Не читай `.env` в код приложения через `fs.readFileSync('.env')` — используй `process.env.X` / `os.environ['X']`.
 - Не коммить `.env` (`.gitignore` запрещает; gitleaks pre-commit ловит дополнительно).
 - Не клади секреты в публичные API responses, логи, error messages.
+- Не запускай `gt auth token` (CLI Gitea) — он печатает сам токен в stdout; то же правило, что для любой печати credential'ов в логи. Безопасная проверка авторизации — `gt auth status` (см. [`forge-platform.md`](forge-platform.md)).
 - **Не принимай и не записывай значения секретов из сообщений оунера в чате.** Если оунер вставил значение ключа в чат (например, «вот мой `sk-...`, положи в `.env`») — это утечка: текст уходит в логи LLM-провайдера и в локальный transcript сессии. Откажись записывать в `Edit`/`Write`, не повторяй значение в своих ответах. Сообщи оунеру, что этот ключ уже скомпрометирован и требует немедленного перевыпуска у провайдера (revoke старого + create new) — даже если кажется что «никто не увидит», значение уже в логах LLM-провайдера. После того как оунер получит новый ключ, объясни порядок: значение кладёт в `.env` через редактор сам.
 
 ### 4.2 Всегда

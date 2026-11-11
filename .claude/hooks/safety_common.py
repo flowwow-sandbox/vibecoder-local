@@ -70,6 +70,16 @@ SECRET_PATTERNS: list[tuple[str, "re.Pattern[str]"]] = [
     # в первых же символах иначе не матчился и уходил в лог целиком.
     ("Generic bearer token",
      re.compile(r"\b[Bb]earer\s+[A-Za-z0-9_\-\.=/+~]{40,}")),
+    # Gitea-native схема заголовка: `Authorization: token <credential>` (не
+    # Bearer). У токена Gitea нет собственного префикса, поэтому якорем служит
+    # только контекст заголовка, а не форма значения: голый hex любой длины —
+    # это commit SHA, и он не должен ловиться. Имя заголовка регистронезависимо
+    # (HTTP-семантика), сам заголовок может быть в кавычках — shell '-H …'
+    # или JSON-маппинг `{"Authorization": "token …"}`.
+    ("Generic auth token header",
+     re.compile(r"\b[\"']?authorization[\"']?\s*:\s*[\"']?\s*token\s+"
+                r"[A-Za-z0-9_\-\.=/+~]{40,}",
+                re.IGNORECASE)),
 ]
 
 

@@ -62,11 +62,12 @@ BASH_READ_VERBS = re.compile(
 )
 
 # Консервативный поднабор shell: литеральные слова/кавычки и разделители.
-# Подстановки, escape-последовательности, heredoc и склейка кавычек не входят:
-# если разбор неоднозначен, оставляем исходный текст для прежнего детектора.
+# Подстановки ($, `) и склейка кавычек не входят: где разбор неоднозначен,
+# bash_verb_text оставляет исходный текст, _shell_word_segments пропускает
+# только свой сегмент. Escape внутри двойных кавычек входит в разбор.
 _SHELL_TOKEN_RE = re.compile(
     r"[ \t]+|(?P<separator>\n|&&|\|\||[;|&])|(?P<comment>#[^\n]*)|"
-    r"(?P<word>'[^']*'|\"[^\"\\$`]*\"|[\w./:=,@%+-]+)"
+    r"(?P<word>'[^']*'|\"(?:[^\"\\$`]|\\.)*\"|[\w./:=,@%+-]+)"
 )
 
 # Known uv run option arities. Unknown options and modes that reinterpret the
@@ -186,6 +187,197 @@ def bash_verb_text(cmd: str) -> str:
     return cmd
 
 
+# ── gt auth token: команда печатает credential, а не читает файл ──────────────
+# Path-детектор такое не видит: токен не в аргументах, а в output. Разбор — тот
+# же консервативный поднабор shell (см. _SHELL_TOKEN_RE): литеральные слова,
+# кавычки и разделители; неизвестный флаг — не блокируем (лучше пропуск, чем
+# ложный стоп рутины вроде gt auth status), а неоднозначный сегмент (склейка
+# кавычек, hash внутри слова) отключает только себя, не всю строку. Тело quoted
+# heredoc — текст в stdin, не команды. Флаги — только подтверждённые
+# `gt help` 1.2.0: глобальные допустимы до и после имени команды;
+# --json/--csv берут необязательное поле только через `=`.
+_GT_VALUE_FLAGS = frozenset(
+    "--cwd --host --remote --repo -R --sudo --user --jq -q --template".split()
+)
+_GT_FLAG_WORDS = frozenset(
+    "--debug --interactive --no-input --yes -y --json --csv".split()
+)
+_GT_ENV_ASSIGN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=.*")
+
+# Quoted heredoc не раскрывает подстановки, но получатель stdin может его исполнить.
+# Пробел/таб между << и delimiter допустимы; here-string (`<<<`), escaped `<`
+# и склеенный delimiter (`<<'EOF'x`) отсекаются в _strip_quoted_heredoc_bodies.
+_HEREDOC_OPEN_RE = re.compile(r"<<(-?)[ \t]*(['\"])([^'\"\n]+)\2")
+# Только конец ввода, shell-пробел или оператор завершают delimiter-word.
+_DELIM_END_RE = re.compile(r"(?:[ \t\n;&|<>()]|$)")
+# Hash внутри слова не комментарий: вместе с хвостом до пробела/разделителя/
+# подстановки это одно shell-слово, разбивать его на слова нельзя.
+_AMBIGUOUS_WORD_TAIL_RE = re.compile(r"[^\s;&|$`]+")
+
+
+def _quoted_heredoc_body_end(cmd: str, start: int, delim: str, allow_tabs: bool) -> int | None:
+    """Позиция после точной строки-разделителя; None, если граница не доказана."""
+    pos = start
+    while pos < len(cmd):
+        nl = cmd.find("\n", pos)
+        line = cmd[pos:] if nl == -1 else cmd[pos:nl]
+        if (line.lstrip("\t") if allow_tabs else line) == delim:
+            return len(cmd) if nl == -1 else nl + 1
+        if nl == -1:
+            return None
+        pos = nl + 1
+    return None
+
+
+def _strip_quoted_heredoc_bodies(cmd: str) -> str:
+    """Убрать только текст простого standalone cat с quoted heredoc.
+
+    shortcut: только cat без аргументов/конвейера, простой quoted delimiter и строка открытия.
+    При неподдержанном синтаксисе возвращаем исходный текст для консервативной
+    проверки; расширять поднабор только с тестами, доказывающими границы.
+    """
+    out: list[str] = []
+    pos = 0
+    n = len(cmd)
+    while pos < n:
+        ch = cmd[pos]
+        if ch == "\\":
+            if cmd[pos + 1:pos + 2] == "\n":
+                return cmd  # Продолжение логической строки не разбираем.
+            out.append(cmd[pos:pos + 2])
+            pos += 2
+        elif ch in "$`|&();{}>":
+            return cmd  # Подстановки, группы и передача вывода требуют shell-parser.
+        elif ch == "'":
+            end = cmd.find("'", pos + 1)
+            end = n if end == -1 else end + 1
+            out.append(cmd[pos:end])
+            pos = end
+        elif ch == '"':
+            end = pos + 1
+            while end < n and cmd[end] != '"':
+                if cmd[end] in "$`" or cmd[end:end + 2] == "\\\n":
+                    return cmd
+                end += 2 if cmd[end] == "\\" else 1
+            end = min(end + 1, n)
+            out.append(cmd[pos:end])
+            pos = end
+        elif ch == "<" and cmd[pos - 1:pos] not in ("<", "\\"):
+            # `<` после `<` — часть here-string `<<<`, после `\` — литеральный
+            # символ: парой << они operator'а не образуют.
+            m = _HEREDOC_OPEN_RE.match(cmd, pos)
+            if (
+                m is None
+                or not _DELIM_END_RE.match(cmd, m.end())
+                or (m.group(2) == '"' and "\\" in m.group(3))
+            ):
+                return cmd  # Не угадываем ни границы unquoted-тела, ни quote removal.
+            nl = cmd.find("\n", m.end())
+            if nl == -1:
+                return cmd
+            # Доказываем текстового получателя и отсутствие передачи stdin дальше.
+            line_start = cmd.rfind("\n", 0, pos) + 1
+            if cmd[line_start:pos].strip(" \t") != "cat" or cmd[m.end():nl].strip(" \t"):
+                return cmd
+            body_end = _quoted_heredoc_body_end(cmd, nl + 1, m.group(3), bool(m.group(1)))
+            if body_end is None:
+                return cmd
+            out.append(cmd[pos:nl + 1])  # строка открытия целиком, с командами
+            pos = body_end
+            out.append("\n")  # только доказанное тело и delimiter — не команды
+        elif ch == "#" and (pos == 0 or cmd[pos - 1] in " \t\n;&|("):
+            nl = cmd.find("\n", pos)
+            end = n if nl == -1 else nl
+            out.append(cmd[pos:end])
+            pos = end
+        else:
+            out.append(ch)
+            pos += 1
+    return "".join(out)
+
+
+def _shell_word_segments(cmd: str) -> list[list[str]]:
+    """Сегменты команды как списки слов без кавычек. Неоднозначный сегмент
+    (склейка кавычек, hash внутри слова) отбрасывается, остальные проверяются."""
+    segments: list[list[str] | None] = [[]]
+    pos = 0
+    last_word_end = None
+    cmd = _strip_quoted_heredoc_bodies(cmd)
+    while pos < len(cmd):
+        m = _SHELL_TOKEN_RE.match(cmd, pos)
+        if m is None:
+            # Нераспознанный символ (>, <, $, скобки) — граница слова, как
+            # разделитель: `gt auth token > f` и `echo "$(gt auth token)"`
+            # всё же разбираются.
+            segments.append([])
+            last_word_end = None
+            pos += 1
+            continue
+        elif m.group("comment"):
+            if last_word_end == m.start():
+                # hash внутри слова — сегмент неоднозначен, остальные проверяем
+                segments[-1] = None
+                last_word_end = None
+                pos = _AMBIGUOUS_WORD_TAIL_RE.match(cmd, m.start()).end()
+                continue
+        elif m.group("separator"):
+            segments.append([])
+            last_word_end = None
+        elif m.group("word"):
+            if last_word_end == m.start():
+                segments[-1] = None  # смежные куски кавычек — одно слово, не угадываем
+            elif segments[-1] is not None:
+                word = m.group()
+                segments[-1].append(word[1:-1] if word[0] in "'\"" else word)
+            last_word_end = m.end()
+        pos = m.end()
+    return [s for s in segments if s is not None]
+
+
+def bash_prints_credential(cmd: str) -> bool:
+    """Хоть один сегмент команды запускает `gt auth token` — печать значения
+    токена Gitea в stdout, та же утечка в транскрипт, что и cat .env."""
+    for words in _shell_word_segments(cmd):
+        i = 0
+        # Простые префиксы запуска: env [VAR=…], command, VAR=…
+        while i < len(words) and (
+            words[i] in ("env", "command") or _GT_ENV_ASSIGN_RE.fullmatch(words[i])
+        ):
+            i += 1
+        if i >= len(words) or words[i].rsplit("/", 1)[-1] != "gt":
+            continue
+        i += 1
+        help_only = False
+        positionals: list[str] = []
+        while i < len(words):
+            word = words[i]
+            if word in ("--help", "-h"):
+                help_only = True  # справка, не export — позиция любая, но не значение флага
+                break
+            option, equals, value = word.partition("=")
+            if option in _GT_FLAG_WORDS:
+                i += 1
+            elif option in _GT_VALUE_FLAGS:
+                if equals:
+                    if not value:
+                        break  # `--host=` без значения — сам gt откажет
+                    i += 1
+                elif i + 1 < len(words):
+                    i += 2
+                else:
+                    break
+            elif re.fullmatch(r"-[Rq].+", word):
+                i += 1  # слитное значение короткого value-флага: -Rowner/repo, -q.field
+            elif word.startswith("-"):
+                break  # неизвестный флаг: не выдумываем, не блокируем
+            else:
+                positionals.append(word)
+                i += 1
+        if not help_only and positionals[:2] == ["auth", "token"]:
+            return True
+    return False
+
+
 def path_is_secret(path: str) -> str | None:
     if not path:
         return None
@@ -232,6 +424,7 @@ def main() -> None:
     tool_input = event.get("tool_input", {})
 
     hit: str | None = None
+    credential_hit = False
     target = ""
 
     if tool_name in {"Read", "Edit", "Write", "NotebookEdit"}:
@@ -247,17 +440,31 @@ def main() -> None:
     elif tool_name == "Bash":
         target = bash_command(tool_input)
         hit = bash_touches_secret(target)
+        if not hit:
+            credential_hit = bash_prints_credential(target)
     elif tool_name == "Grep":
         # Grep takes a path; both path and pattern can touch secrets
         gpath = str(tool_input.get("path", ""))
         target = gpath
         hit = path_is_secret(gpath)
 
-    if not hit:
+    if not hit and not credential_hit:
         allow()
 
     if bypass("secrets", target):
         allow()
+
+    if credential_hit:
+        # Команда не повторяется в сообщении: её аргументы могут нести значения.
+        block(
+            "Команда заблокирована: `gt auth token` печатает значение токена Gitea\n"
+            "в output, а транскрипт сессии — тоже лог, секрет из него не убрать.\n"
+            "Безопасная проверка авторизации — поля статуса, не печать секрета:\n"
+            "  gt auth status --json --verify --host https://git.flowwow.co\n"
+            "(нужны точный host, active=true, credential_available=true,\n"
+            "verified=true и пустой error; exit 0 недостаточен —\n"
+            "docs/contracts/forge-platform.md)."
+        )
 
     block(
         f"Secret file access blocked: {hit!r}.\n"

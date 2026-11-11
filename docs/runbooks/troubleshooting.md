@@ -15,26 +15,35 @@
 
 ## Секция 1: start.sh
 
-> Все ошибки ниже означают, что какой-то prerequisite не был установлен до клонирования template'а. Полный список — [runbook:onboarding](./onboarding.md). Если симптом не совпадает ни с одним кейсом ниже — запусти `./infra/start.sh` под `bash -x`, чтобы видеть какой шаг падает, и сообщи вывод.
+> Все ошибки ниже означают, что какой-то prerequisite не был установлен до клонирования template'а. Полный список — [runbook:onboarding](./onboarding.md). Если симптом не совпадает ни с одним кейсом ниже — запусти `./infra/start.sh` без флагов и сообщи его вывод: сообщение об ошибке само называет падающий шаг. Не включай трассировку shell (xtrace) и не пересылай её вывод — она раскрывает credentials из origin и переменные окружения.
 
-### Симптом: `gh: command not found` / `gh-not-installed`
+### Симптом: `gh: command not found` / `gt: command not found` / `…-not-installed`
 
-`start.sh` не находит GitHub CLI.
+`start.sh` не находит CLI своей forge (платформа выбирается по origin, см. [`forge-platform.md`](../contracts/forge-platform.md)).
 
-Действие: запусти `make setup` — на macOS он поставит `gh` (и остальные утилиты) через Homebrew. На другой ОС `make setup` подскажет команду для ручной установки (`brew install gh` / `sudo apt install gh` / https://cli.github.com/manual/installation). Затем запусти `./infra/start.sh` заново.
+Действие: запусти `make setup` — на macOS он поставит CLI выбранной forge (`gh`) и остальные утилиты через Homebrew. Для Gitea проверенного brew/apt-пакета нет: `make setup` напечатает официальную инструкцию <https://gitea.com/gitea/cli/releases> — установка ручная. На другой ОС `make setup` подскажет команду ручной установки (`brew install gh` / `sudo apt install gh` / https://cli.github.com/manual/installation). Затем запусти `./infra/start.sh` заново.
 
 ---
 
-### Симптом: `gh-not-authed` — GitHub CLI не авторизован
+### Симптом: `gh-not-authed` / `gt CLI не авторизован` — CLI не залогинен
 
-GitHub CLI установлен, но не авторизован в аккаунте оунера.
+CLI своей forge установлен, но не авторизован в аккаунте оунера.
 
-Действие: оунер сам выполняет (pre-agent шаг):
+Действие: оунер сам выполняет (pre-agent шаг; агент логин не проходит — браузерный/device-code flow):
 ```bash
-gh auth login
-# Выбери: GitHub.com → HTTPS → Login with web browser
+# GitHub-origin:
+gh auth login --hostname github.com
+# Выбери: HTTPS → Login with web browser
+# Gitea-origin:
+gt auth login --host https://git.flowwow.co
 ```
 После успешного входа запустить `./infra/start.sh` заново.
+
+---
+
+### Симптом: `gt auth status` зелёный, а `git push`/`git fetch` по HTTPS падает `could not read Username`
+
+Авторизация gt сама по себе не настраивает credentials обычного Git: без пригодного helper `gt repo clone` работает, а push/fetch из клона — нет (эта ошибка и была на таком клоне). Это не повторный login, и работающий собственный helper трогать не нужно. Оунер выполняет из нужного клона `gt auth setup-git --local --host https://git.flowwow.co` — он прописывает repo-local http helper (без `--local` настройка уйдёт в global-конфиг и может заместить прежние helpers этого host). SSH-origin использует свой SSH key, helper не нужен. Подробности — [`forge-platform.md`](../contracts/forge-platform.md).
 
 ---
 
@@ -43,7 +52,7 @@ gh auth login
 Наличие токена не подтверждает его валидность или доступность GitHub. `start.sh` проверяет активный токен сетевым API-запросом на том же хосте, что и остальные API-вызовы. Ошибка может означать проблему авторизации или сети; унаследованный `CODEX_SANDBOX_NETWORK_DISABLED=1` сам по себе не доказывает, что разрешённый запуск скрипта лишён сети.
 
 1. Проверь сеть. В Codex используй **«Запрашивать разрешение»** или **«Подтверждать за меня»**: запроси минимальный доступ для исходной команды запуска `./infra/start.sh` целиком, включая сеть к GitHub и предусмотренные шагами онбординга записи. После разрешения повтори ту же команду с теми же аргументами. Дочерние команды наследуют sandbox запуска; разрешение на отдельный `gh` не распространяется на скрипт. Full Access не требуется.
-2. Для отдельной диагностики состояния входа в GitHub.com выполни `gh auth status --active --hostname github.com`. Обычный `gh auth status` проверяет также посторонние аккаунты/хосты и может отказать из-за них. Если активный токен отсутствует или диагностика указывает на его проблему — оунер сам выполняет `gh auth login`. При сетевой ошибке сначала восстанови соединение с GitHub, затем повтори исходный запуск `./infra/start.sh`; разрешение на диагностику не переносится на него.
+2. Для отдельной диагностики состояния входа в GitHub.com выполни `gh auth status --active --hostname github.com`. Обычный `gh auth status` проверяет также посторонние аккаунты/хосты и может отказать из-за них. Если активный токен отсутствует или диагностика указывает на его проблему — оунер сам выполняет `gh auth login --hostname github.com`. При сетевой ошибке сначала восстанови соединение с GitHub, затем повтори исходный запуск `./infra/start.sh`; разрешение на диагностику не переносится на него.
 3. Если автоматический reviewer отклонил запрос — объясни оунеру отклонённое действие и причину. Предложи более безопасный вариант или запроси его явное решение; не повторяй отклонённое действие другим способом без решения пользователя. Sandbox сохраняется. См. [режимы подтверждения](https://learn.chatgpt.com/docs/sandboxing) и [автоматическую проверку](https://learn.chatgpt.com/docs/sandboxing/auto-review).
 
 `workspace-write` не обещает изоляцию чтения папкой проекта: доступ к файлам определяется [профилем разрешений](https://learn.chatgpt.com/docs/permissions#file-access-limited-to-workspace). Настройки Codex и ограничения sandbox сохраняются.
@@ -71,8 +80,9 @@ workflow живёт внутри **WSL2 (Ubuntu)** — там окружение
 
 На Windows поддержан **только Codex** (в WSL2); Claude Code на Windows не предлагаем:
 1. Установи WSL2: PowerShell от администратора → `wsl --install` → перезагрузка → создай пользователя Ubuntu.
-2. Открой терминал Ubuntu и выполни bootstrap (создаёт `~/code/`, ставит `gh`/`gitleaks`/`jq`/`envsubst`, авторизует `gh`):
+2. Открой терминал Ubuntu и выполни bootstrap (создаёт `~/code/`, ставит общие утилиты `gitleaks`/`jq`/`envsubst`; forge-CLI `gh`/`gt` и логин **не** ставит — их выбирает уже клон проекта по origin):
    `curl -fsSL https://raw.githubusercontent.com/flowwow-sandbox/vibecoder-local/main/infra/bootstrap-wsl.sh | bash`
+   Дальше склонируй проект и выполни `make setup` и `./infra/start.sh` из его корня.
 3. В Codex Desktop переключи агента в WSL-режим: Настройки → выбрать WSL (дистрибутив Ubuntu) → **полностью** закрыть и снова открыть приложение (включая значок в трее).
 4. Проект добавляй уже в WSL-режиме, из `~/code/`. Его путь в шапке сессии должен выглядеть как `/home/<user>/code/<проект>` — путь вида `\\wsl.localhost\Ubuntu\...` означает, что режим не применился (кейс «Codex падает `helper_unknown_error`» ниже).
 
@@ -144,12 +154,14 @@ workflow живёт внутри **WSL2 (Ubuntu)** — там окружение
 
 ### Симптом: `Имя репо не совпадает со slug` / `invalid-slug`
 
-`start.sh` проверяет соответствие имени GitHub-репозитория и `SANDBOX_SLUG` из `.env`.
+`start.sh` проверяет соответствие имени репозитория своей forge (по origin) и `SANDBOX_SLUG` из `.env`.
 
-Действие:
+Действие (команда — своей forge, repo адресуется явно из origin: без этого CLI возьмёт repo из своего конфига или upstream и переименует чужой проект):
 ```bash
-# Вариант 1: переименовать репо (быстрее)
-gh repo rename <correct-slug>
+# GitHub-origin:
+gh repo rename -R github.com/OWNER/REPO <correct-slug>
+# Gitea-origin:
+gt repo rename <correct-slug> -R OWNER/REPO --host https://git.flowwow.co
 
 # После исправления:
 ./infra/start.sh
@@ -159,9 +171,14 @@ gh repo rename <correct-slug>
 
 ### Симптом: `start.sh` пишет warning «репо ещё не создан?» при проверке slug
 
-Если репо ещё не создан / не запушен в GitHub, `start.sh` НЕ падает: проверка «имя репо = slug» мягко пропускается с warning'ом «Не удалось получить имя репо через gh repo view (репо ещё не создан?)». Это ок до первого push'а.
+Если репо ещё не создан / не запушен, `start.sh` НЕ падает: проверка «имя репо = slug» мягко пропускается с warning'ом. Текст зависит от forge (по origin):
 
-Действие: чинить нечего. После первого push'а запусти `./infra/start.sh` ещё раз — проверка slug отработает.
+- GitHub-origin: «Не удалось получить имя репо через gh repo view (репо ещё не создан?)».
+- Gitea-origin: «Не удалось прочитать репо через gt repo view — проверка repo name = slug пропущена».
+
+Оба — одно и то же мягкое продолжение, это ок до первого push'а. Отказ чтения repo view у себя на forge — не единственная причина такого warning'а: если репо давно запушено, а warning повторяется, это сбой чтения (auth/сеть/доступ), а не «ещё не создан» — смотри кейс `gh-not-authed` выше или `gt auth status --verify --host https://git.flowwow.co`.
+
+Действие: до первого push'а чинить нечего. После первого push'а запусти `./infra/start.sh` ещё раз — проверка slug отработает.
 
 ---
 

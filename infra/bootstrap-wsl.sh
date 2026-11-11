@@ -22,17 +22,11 @@ if ! command -v jq >/dev/null 2>&1 || ! command -v envsubst >/dev/null 2>&1; the
   sudo apt-get install -y jq gettext-base
 fi
 
-# ── GitHub CLI (gh) ───────────────────────────────────────────────────────────
-if ! command -v gh >/dev/null 2>&1; then
-  sudo mkdir -p -m 755 /etc/apt/keyrings
-  curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-    | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg >/dev/null
-  sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
-    | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
-  sudo apt-get update -y
-  sudo apt-get install -y gh
-fi
+# ── Forge-CLI (gh / gt) здесь НЕ устанавливается и НЕ логинится ──────────────
+# Этот скрипт идёт ДО клонирования проекта: платформа неизвестна, поэтому
+# default forge нет. Bootstrap намеренно forge-neutral — только общие утилиты;
+# CLI и авторизацию выбирает уже клон (make setup и ./infra/start.sh по
+# эффективному origin через infra/_forge.sh) — без сканирования чужих папок.
 
 # ── gitleaks — устанавливается из release-бинаря, а не из apt ────────────────
 # Пакет gitleaks отсутствует в стандартных Ubuntu-репозиториях.
@@ -58,14 +52,14 @@ if ! command -v gitleaks >/dev/null 2>&1; then
   trap - EXIT
 fi
 
-# ── Авторизация в GitHub ──────────────────────────────────────────────────────
-if gh auth status >/dev/null 2>&1; then
-  echo "gh уже авторизован ✓"
-elif { : </dev/tty; } 2>/dev/null; then
-  echo "Сейчас откроется авторизация GitHub. Следуй инструкции в браузере."
-  gh auth login </dev/tty
-else
-  echo "Последний шаг — выполни в терминале:  gh auth login"
-fi
-
-echo "Готово ✓  Рабочая папка: ~/code/  Дальше — открой свой проект в Codex."
+echo "Готово ✓  Рабочая папка: ~/code/"
+echo
+echo "Дальше: клонируй свой проект в ~/code, открой папку проекта и запусти:"
+echo "  make setup         # покажет инструкции установки forge-CLI по origin:"
+echo "                     # gh для GitHub; gt для Gitea — вручную:"
+echo "                     # https://gitea.com/gitea/cli/releases"
+echo "                     # Выполни их до ./infra/start.sh"
+echo "  ./infra/start.sh   # проверит auth своей forge и завершит onboarding"
+echo
+echo "Авторизация — после клона, своей командой: gh auth login (GitHub)"
+echo "или gt auth login --host https://git.flowwow.co (Gitea)."

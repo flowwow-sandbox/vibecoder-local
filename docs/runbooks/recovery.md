@@ -20,7 +20,7 @@
 
 2. **На новом ноутбуке:** оунер должен сам пройти первоначальную настройку по чеклисту https://sandbox.flowwow.co/start
 
-3. **Клонируй репо.** Спроси у оунера, какой именно репозиторий на GitHub нужно склонировать, и склонируй. Onboarding-runbook запускать не нужно — сначала восстанови `.env` (шаг 4).
+3. **Клонируй репо.** Спроси у оунера, какой именно репозиторий нужно склонировать (GitHub — `gh repo clone https://github.com/OWNER/REPO`: полный URL, потому что до clone origin в проекте ещё нет и `GH_HOST`/конфиг `gh` не должны выбирать назначение; Gitea — `git clone` по точному URL из веб-интерфейса git.flowwow.co), и склонируй. Onboarding-runbook запускать не нужно — сначала восстанови `.env` (шаг 4).
 
 4. **Оунер восстанавливает `.env` из парольного менеджера.**
    - Открой `.env` в редакторе IDE.
@@ -56,8 +56,8 @@
 ## Когда что-то пошло не так
 
 - **`gh repo clone` падает с 404** → нет доступа к репо. Проверь права доступа в GitHub.
-- **`./infra/start.sh` падает с prereq (gh / gitleaks)** → pre-clone setup пропущен. Установи утилиту, скажи «готово», запусти start.sh снова.
-- **`gh auth login` не проходит** → авторизуйся в браузере через device-code flow, который откроет `gh auth login`.
+- **`./infra/start.sh` падает с prereq (gh / gt / gitleaks)** → pre-clone setup пропущен. Установи утилиту, скажи «готово», запусти start.sh снова (`gt` для Gitea — вручную по <https://gitea.com/gitea/cli/releases>).
+- **`gh auth login` не проходит** → авторизуйся в браузере через device-code flow, который откроет `gh auth login --hostname github.com`. Для Gitea-репо авторизация — `gt auth login --host https://git.flowwow.co`; если после неё `git push` на HTTPS-клоне просит Username (авторизация gt сама Git-credentials не настраивает), из клона выполняется `gt auth setup-git --local --host https://git.flowwow.co` — при уже работающем helper не нужно (см. [`forge-platform.md`](../contracts/forge-platform.md)).
 
 ---
 
