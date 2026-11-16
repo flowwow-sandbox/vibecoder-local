@@ -21,7 +21,7 @@
 
 `start.sh` не находит CLI своей forge (платформа выбирается по origin, см. [`forge-platform.md`](../contracts/forge-platform.md)).
 
-Действие: запусти `make setup` — на macOS он поставит CLI выбранной forge (`gh`) и остальные утилиты через Homebrew. Для Gitea проверенного brew/apt-пакета нет: `make setup` напечатает официальную инструкцию <https://gitea.com/gitea/cli/releases> — установка ручная. На другой ОС `make setup` подскажет команду ручной установки (`brew install gh` / `sudo apt install gh` / https://cli.github.com/manual/installation). Затем запусти `./infra/start.sh` заново.
+Действие: запусти `make setup` — на macOS он поставит CLI выбранной forge (`gh` для GitHub; `gt` — нет, только официальная ссылка ниже) и остальные утилиты через Homebrew. Для Gitea проверенного brew/apt-пакета нет: `make setup` напечатает официальную инструкцию <https://gitea.com/gitea/cli/releases> — установка ручная, на Linux тоже (бинарь оттуда же). На другой ОС `make setup` подскажет команду ручной установки (`brew install gh` / `sudo apt install gh` / https://cli.github.com/manual/installation). Затем запусти `./infra/start.sh` заново.
 
 ---
 

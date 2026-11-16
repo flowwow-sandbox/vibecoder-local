@@ -51,13 +51,24 @@ Auth (на обеих платформах) доказывает личност�
 
   ```bash
   gh pr create --fill -R github.com/OWNER/REPO
+  gh pr checks N -R github.com/OWNER/REPO
   gh pr view N --json state -q .state -R github.com/OWNER/REPO
   gh pr merge N --squash -R github.com/OWNER/REPO
   gh pr list -R github.com/OWNER/REPO
   ```
 
-  Origin-ветка сносится отдельным `git push origin --delete` только после
-  подтверждённого `MERGED` у **того же** номера PR (см. dev-workflow §2.7).
+  `gh pr checks` — те же адресация и флаги, что у остальных `gh pr`; обычный
+  прогон — без `--required`: флаг показывает только проверки, которых требует
+  branch protection, и без настроенных required-проверок даёт пустой набор —
+  добавляй его, только если branch protection в репозитории уже настроена.
+  exit 8 — проверки ещё идут, exit 1 — проверка упала. Зелёный мерж-гейт —
+  только когда ожидаемые проверки прошли; пустой набор или неизвестные checks
+  готовность не доказывают. Заведомое отсутствие hosted-проверок в репозитории
+  — не сбой: не создавай workflow или branch protection ради этого шага,
+  готовность PR без hosted-checks держат L1 / cross-review / L2
+  (dev-workflow §2). Origin-ветка сносится отдельным
+  `git push origin --delete` только после подтверждённого `MERGED` у **того
+  же** номера PR (см. dev-workflow §2.7).
 - Rename при несовпадении имени репо со slug — подсказка пилоту:
   `gh repo rename -R github.com/OWNER/REPO <slug>` (или Settings веб-интерфейса),
   не автоматическая мутация.
@@ -100,10 +111,27 @@ merge-flow); прочие флаги и поля ниже ограничены �
 
   ```bash
   gt pr create --fill --yes -R OWNER/REPO --host https://git.flowwow.co
+  gt pr checks N -R OWNER/REPO --host https://git.flowwow.co
   gt pr view N --json merged,head_sha -R OWNER/REPO --host https://git.flowwow.co
   gt pr merge N --squash --yes --delete-branch=false -R OWNER/REPO --host https://git.flowwow.co
   gt pr list -s open -R OWNER/REPO --host https://git.flowwow.co
   ```
+
+  `gt pr checks` (проверено по локальной справке `gt 1.2.0`) адресуется так же
+  явно — `-R OWNER/REPO --host https://git.flowwow.co`; обычный прогон — без
+  `--required`: флаг сужает набор до проверок branch protection;
+  без required-проверок gt завершится с ошибкой. Добавляй его, только если
+  branch protection в репозитории уже требует checks. Коды выхода как у
+  `gh pr checks`: exit 8 — проверки ещё идут (pending), exit 1 — проверка упала
+  (failed). Ни pending (exit 8), ни failed (exit 1), ни пустой или неизвестный
+  набор проверок не доказывают, что checks прошли: это не сигнал merge.
+  Заведомое отсутствие hosted-проверок в репозитории — не сбой: не создавай
+  workflow или branch protection ради этого шага, готовность PR без
+  hosted-checks держат L1 / cross-review / L2 (dev-workflow §2).
+  `--watch`/`--timeout`/`--interval` — локальные флаги ожидания, их
+  можно добавить, но готовность всё равно читается по exit-коду. Флаги gh на
+  `gt pr checks` не переносятся: у gt их просто нет, и отказ CLI — сигнал
+  вернуться к этой секции, а не подбирать другой флаг.
 
   (`--yes` обязателен в скриптах: без него create/merge запрашивают
   подтверждение. `--delete-branch=false` обязателен тоже: с ним head-ветка

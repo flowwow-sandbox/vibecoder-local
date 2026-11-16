@@ -55,8 +55,8 @@
 
 ## Когда что-то пошло не так
 
-- **`gh repo clone` падает с 404** → нет доступа к репо. Проверь права доступа в GitHub.
-- **`./infra/start.sh` падает с prereq (gh / gt / gitleaks)** → pre-clone setup пропущен. Установи утилиту, скажи «готово», запусти start.sh снова (`gt` для Gitea — вручную по <https://gitea.com/gitea/cli/releases>).
+- **`gh repo clone` падает с 404** → нет доступа к репо. Проверь права доступа в GitHub; на Gitea-репо — доступ к `git.flowwow.co` (клон идёт обычным `git clone` по URL из веб-интерфейса).
+- **`./infra/start.sh` падает с prereq (gh / gt / gitleaks)** → pre-clone setup пропущен. Установи утилиту, скажи «готово», запусти start.sh снова (`gt` для Gitea — вручную по <https://gitea.com/gitea/cli/releases>, на Linux тоже).
 - **`gh auth login` не проходит** → авторизуйся в браузере через device-code flow, который откроет `gh auth login --hostname github.com`. Для Gitea-репо авторизация — `gt auth login --host https://git.flowwow.co`; если после неё `git push` на HTTPS-клоне просит Username (авторизация gt сама Git-credentials не настраивает), из клона выполняется `gt auth setup-git --local --host https://git.flowwow.co` — при уже работающем helper не нужно (см. [`forge-platform.md`](../contracts/forge-platform.md)).
 
 ---

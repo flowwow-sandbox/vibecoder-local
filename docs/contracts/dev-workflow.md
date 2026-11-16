@@ -79,15 +79,17 @@ L2 не автоматизируется. Без явного «ок» от оу
 ### 2.7 PR + merge
 
 Команды PR-цикла — в секции своей forge [`forge-platform.md`](forge-platform.md);
-здесь только форма GitHub (`gh`). Платформа проекта одна и определяется по
-origin, флаги одного CLI на другой не переносятся.
+здесь один user flow для обеих, без нового скрипта. Платформа проекта одна и
+определяется по origin, флаги одного CLI на другой не переносятся.
 
-Push feature-ветки и открой PR (OWNER/REPO — из origin, адресация явная; без
-`-R` gh берёт repo из своего конфига или upstream и действует на чужом проекте):
+Push feature-ветки, открой PR и дождись проверок (OWNER/REPO — из
+origin, адресация явная; без `-R` gh берёт repo из своего конфига или upstream
+и действует на чужом проекте). GitHub-origin (`gh`):
 
 ```bash
 git push -u origin feature/<slug>
 gh pr create --fill -R github.com/OWNER/REPO
+gh pr checks N -R github.com/OWNER/REPO
 gh pr merge N --squash -R github.com/OWNER/REPO
 # origin-ветку удаляй ТОЛЬКО когда PR реально MERGED: при branch-protection/merge-queue
 # merge откладывается, и преждевременное удаление снесёт ветку, которая ещё нужна GitHub'у.
@@ -95,7 +97,23 @@ gh pr merge N --squash -R github.com/OWNER/REPO
 [ "$(gh pr view N --json state -q .state -R github.com/OWNER/REPO)" = "MERGED" ] && git push origin --delete feature/<slug>
 ```
 
+Gitea-origin (`gt`) — тот же порядок, своя форма адресации и свои флаги:
+`git push -u origin feature/<slug>`, затем
+`gt pr create --fill --yes -R OWNER/REPO --host https://git.flowwow.co`,
+`gt pr checks N -R OWNER/REPO --host https://git.flowwow.co`,
+`gt pr merge N --squash --yes --delete-branch=false -R OWNER/REPO --host https://git.flowwow.co`.
+Merge подтверждается полем `merged`: origin-ветку сноси тем же отдельным
+`git push origin --delete` **только** после
+`gt pr view N --json merged -R OWNER/REPO --host https://git.flowwow.co` →
+`merged == true`; `state == closed` слияние не доказывает.
+
 `--squash` сворачивает все коммиты feature-ветки в один коммит main (чистая история).
+`gh pr checks` / `gt pr checks` — gate перед merge: exit 8 (pending) и exit 1
+(failed) готовность не доказывают, как и пустой/неизвестный набор проверок.
+`--required` добавляй, только если branch protection репозитория уже требует
+checks (см. `forge-platform.md`). Если
+hosted-проверки в репозитории заведомо отсутствуют — не создавай их ради
+этого шага: готовность PR держат L1 / cross-review / L2.
 
 > **Почему НЕ `gh pr merge --delete-branch` из worktree:** чтобы удалить локальную `feature/<slug>`, gh сначала переключается на `main` (`git checkout main`), а `main` закреплён за основным worktree → `fatal: 'main' is already used by worktree`. Merge на GitHub к этому моменту уже прошёл бы, но команда падает (и провоцирует повторный merge). Поэтому: merge без `--delete-branch`, а origin-ветку сноси отдельным `git push origin --delete` — он remote-only, из worktree отрабатывает без ошибок.
 

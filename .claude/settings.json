@@ -63,6 +63,7 @@
       "Bash(gt pr view:*)",
       "Bash(gt pr create:*)",
       "Bash(gt pr list:*)",
+      "Bash(gt pr checks:*)",
       "Bash(gt pr merge:*)",
       "Bash(gt auth status:*)",
       "Bash(gt repo view:*)",

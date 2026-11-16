@@ -119,7 +119,7 @@ exclude-newer = "7 days"
 - Прямой `git push origin main` — запрещён, всё идёт через PR (merge командами своей forge — `./forge-platform.md`, затем `git push origin --delete feature/<slug>`, НЕ `--delete-branch` — из worktree упрётся; см. `./dev-workflow.md` §2.7). Исключение — emergency-revert по явному «ок» оунера (см. `./dev-workflow.md` §3).
 - `git config user.*` без явного запроса оунера.
 - `git reset --hard` после коммитов, которые видел оунер (потеря истории).
-- `gh auth logout`.
+- `gh auth logout` / `gt auth logout`.
 
 Всегда:
 - Атомарные коммиты в imperative mood.
@@ -166,8 +166,10 @@ exclude-newer = "7 days"
 | `git cherry-pick` | ✅ Разрешена | — |
 | `git checkout -b <branch>` | ✅ Разрешена (см. dev-workflow.md §5.1) | — |
 | `git config user.*` | ❌ Запрещено политикой | — (текстовое правило) |
-| `gh repo delete` | ⚠️ Только по явному запросу оунера | — |
-| `gh auth logout` | ❌ Запрещено политикой | — (текстовое правило) |
+| `gh repo delete` / `gt repo delete` | ⚠️ Только по явному запросу оунера | — |
+| `gh repo edit` / `gt repo edit` | ⚠️ Только по явному запросу оунера (§7) | — |
+| `gh repo rename` / `gt repo rename` | ⚠️ Подсказка пилоту, не автоматическая мутация (`./forge-platform.md`) | — |
+| `gh auth logout` / `gt auth logout` | ❌ Запрещено политикой | — (текстовое правило) |
 
 ¹ `make wt-prune` удаляет локальную ветку сам — но только у worktree, чья origin-ветка уже удалена и чей tip подтверждён merged-PR через CLI своей forge (`gh` / `gt`). Хук на это не срабатывает (команда выполняется внутри Makefile, а не в Bash-вызове агента), и это осознанно: удаляется ветка, уже влитая в main. Ручной `git branch -D` остаётся заблокированным.
 
@@ -229,5 +231,5 @@ exclude-newer = "7 days"
 - `npm publish` (этот репо НЕ публикуется в npm).
 - Создание `.github/workflows/` — в этом варианте template'а deploy-workflow отсутствует.
 - Любые внешние HTTP-запросы (curl / fetch к сторонним API), не упомянутые оунером явно. **Исключение:** если оунер выдал секрет для конкретного хоста (bot token, webhook URL, API-ключ) — это standing approval на этот хост, повторно спрашивать не нужно. Новый хост без секрета и без упоминания оунером — спроси.
-- `gh repo edit` (изменение настроек репо).
+- `gh repo edit` / `gt repo edit` (изменение настроек репо).
 - **Destructive-SQL во внешней БД** (`DROP TABLE` / `TRUNCATE` / `DELETE FROM` без `WHERE`, `dropdb`, `flushall`), отправленный через `psql` / `mysql` / `mongosh` / `redis-cli` и подобные клиенты — destructive-command-guard блокирует. Локальная SQLite проекта под это правило не подпадает: `sqlite3 app/data/app.db "DROP TABLE …"` — обычная dev-миграция, она проходит, и чтение собственных `.sql`-файлов (`grep`, `cat`) тоже.
